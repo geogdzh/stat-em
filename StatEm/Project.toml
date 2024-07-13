@@ -1,0 +1,4 @@
+name = "StatEm"
+uuid = "ffcd21dc-b818-4de9-9ff0-8fa0744283b4"
+authors = ["m-geo <mgeo@mit.edu>"]
+version = "0.1.0"
