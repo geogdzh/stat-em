@@ -14,7 +14,7 @@ d = parse(Int, ARGS[2])
 # end
 
 using_precip = true 
-non_dim = false  
+non_dim = true
 use_metrics = false
 if using_precip
     parent_folder = "temp_precip"
@@ -39,6 +39,10 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
     mean_coefs = read(hfile, "mean_coefs_$(k)")
     chol_coefs = read(hfile, "chol_coefs")
     basis = read(hfile, "basis")
+    if non_dim
+        temp_factor = read(hfile, "temp_factor")
+        pr_factor = read(hfile, "pr_factor")
+    end
     if use_metrics
         metric = read(hfile, "metric") 
     end
@@ -56,10 +60,10 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
                     data = back_to_data(mean_coefs[n,:,2].*true_ens_gmt[m] .+ mean_coefs[n, :, 1] .+ mean_coefs[n,:,3].*true_ens_gmt[m].^2, basis)
                 end
                 # ens_vars_tas[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[1:M*N,:], M, N) ./ sqrt.(metric) : shape_data(data[1:M*N,:], M, N)
-                ens_vars_tas[:,:,(m-1)*12+n] = shape_data(data[1:M*N,:], M, N)
+                ens_vars_tas[:,:,(m-1)*12+n] = non_dim ? shape_data(data[1:M*N,:], M, N) .* temp_factor : shape_data(data[1:M*N,:], M, N)
                 if using_precip
                     # ens_vars_pr[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[M*N+1:end,:], M, N) ./ sqrt.(metric) : shape_data(data[M*N+1:end,:], M, N)
-                    ens_vars_pr[:,:,(m-1)*12+n] = shape_data(data[M*N+1:end,:], M, N)
+                    ens_vars_pr[:,:,(m-1)*12+n] = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor : shape_data(data[M*N+1:end,:], M, N)
                 end
             end
         else
@@ -68,10 +72,10 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
                 data = sum([co[:,:,n][i,j].*basis[:,i].*basis[:,j] for i in 1:d, j in 1:d]) 
 
                 # ens_vars_tas[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[1:M*N,:], M, N) ./ sqrt.(metric) : shape_data(data[1:M*N,:], M, N)
-                ens_vars_tas[:,:,(m-1)*12+n] = shape_data(data[1:M*N,:], M, N)
+                ens_vars_tas[:,:,(m-1)*12+n] = shape_data(data[1:M*N,:], M, N) .* temp_factor^2 # is this correct??
                 if using_precip
                     # ens_vars_pr[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[M*N+1:end,:], M, N) ./ sqrt.(metric) : shape_data(data[M*N+1:end,:], M, N)
-                    ens_vars_pr[:,:,(m-1)*12+n] = shape_data(data[M*N+1:end,:], M, N) 
+                    ens_vars_pr[:,:,(m-1)*12+n] = shape_data(data[M*N+1:end,:], M, N) .* pr_factor^2
                 end
             end
         end

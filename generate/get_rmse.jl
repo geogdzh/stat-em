@@ -13,7 +13,7 @@ lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
 lonvec2 = lonvec .-180.
 
 using_precip = true 
-non_dim = false  
+non_dim = true  
 use_metrics = false
 if using_precip
     parent_folder = "temp_precip"
