@@ -4,7 +4,7 @@ include("../utils/eof_util.jl")
 
 #### get basis - based ONLY on one ens memeber (should this be substantiated?)
 using_precip = true 
-non_dim = false  
+non_dim = true  
 use_metrics = false
 if using_precip
     parent_folder = "temp_precip"

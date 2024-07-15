@@ -106,7 +106,7 @@ end
 for variable in ["temp", "pr"]
     rel_error = false
 
-    numbers = [10]
+    numbers = [10, 100]
     calculate_rmse(numbers, variable, scenarios; rel_error=rel_error, for_k=false)
     
     ks = [x for x in 1:2]

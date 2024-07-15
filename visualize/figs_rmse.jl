@@ -62,13 +62,13 @@ function plot_rmse(ax, variable, measure, numbers; testing_k=false, rel_error=fa
 
     elems = testing_k ? [LineElement(color=:black, linestyle=:solid),LineElement(color=:black, linestyle=:dash)] : [LineElement(color=:black, linestyle=:solid), LineElement(color=:black, linestyle=:dot)]
     elems_2 = [ LineElement(color=scenario_colors["ssp119"]), LineElement(color=scenario_colors["ssp245"]), LineElement(color=scenario_colors["ssp585"])]
-    labels = testing_k ? ["k=1",  "k=2"] : [ "100 modes",  "20 modes"]
+    labels = testing_k ? ["k=1",  "k=2"] : [ "100 modes",  "10 modes"]
     labels_2 = [ "SSP119", "SSP245", "SSP585"]
     axislegend(ax, [elems..., elems_2...], [labels..., labels_2...], position=(measure=="var" && variable=="temp" ? :lb : :lt))
 end
 
 
-numbers = [10]
+numbers = [10, 100]
 ks = [x for x in 1:2]
 
 variable = "pr" #temp/pr
@@ -89,7 +89,7 @@ begin
     ax = GeoAxis(fig[2,1:5], title="d) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "precipitation") on SSP119")
     hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r") #toggle here
     begin
-        data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_10") #CHANGE BACK
+        data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
         close(hfile)
         ext = (0., maximum(data))
         heatmap!(ax, lonvec2, latvec, data[:,:,1], colormap=:thermal, colorrange=ext)
@@ -103,14 +103,14 @@ begin
     ax = GeoAxis(fig[2,7:11], title="e) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "precipitation") on SSP119")
     hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r") #toggle here
     begin
-        data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_10") #CHANGE BACK
+        data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
         close(hfile)
         ext = (0., maximum(data))
         heatmap!(ax, lonvec2, latvec, data[:,:,1], colormap=:thermal, colorrange=ext)
         Colorbar(fig[2,12], label="RMSE", colormap=:thermal, colorrange=ext, height = Relative(2/4))
     end
     colsize!(fig.layout, 12, Relative(1/11))
-    # save("figs/rmse_joint_$(variable)$(rel_error ? "_rel" : "").png", fig)
+    save("figs/$(parent_folder)/rmse_joint_$(variable)$(rel_error ? "_rel" : "").png", fig)
     fig
 end 
 

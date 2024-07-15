@@ -6,11 +6,12 @@ include("../utils/emulator_util.jl")
 scenarios = ["historical", "ssp585", "ssp245", "ssp119"]
 
 param = ARGS[1]
-if param == "d"
-    d = parse(Int, ARGS[2])
-else #if testing k 
-    d = 10 #CHANGE DEFAULT
-end
+d = parse(Int, ARGS[2])
+# if param == "d"
+#     d = parse(Int, ARGS[2])
+# else #if testing k 
+#     d = 10 #CHANGE DEFAULT
+# end
 
 using_precip = true 
 non_dim = false  
