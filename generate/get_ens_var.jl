@@ -96,7 +96,7 @@ if param == "d"
         if using_precip
             ens_vars_tas, ens_vars_pr = get_ens_vars(d, true_ens_gmt)
             ens_means_tas, ens_means_pr = get_ens_vars(d, true_ens_gmt; get_means=true)
-            hfile = h5open("data/$(parent_folder)/ens_vars_$(scenario)_$(d)d.hdf5", "w")
+            hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
             write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
             write(hfile, "ens_vars_pr_$(d)", ens_vars_pr)
             write(hfile, "ens_means_tas_$(d)", ens_means_tas)
@@ -105,7 +105,7 @@ if param == "d"
         else
             ens_vars_tas = get_ens_vars(d, true_ens_gmt)
             ens_means_tas = get_ens_vars(d, true_ens_gmt; get_means=true)
-            hfile = h5open("data/$(parent_folder)/ens_vars_$(scenario)_$(d)d.hdf5", "w")
+            hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
             write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
             write(hfile, "ens_means_tas_$(d)", ens_means_tas)
             close(hfile)
@@ -122,13 +122,13 @@ elseif param == "k"
         true_ens_gmt = mean(ens_gmt, dims=1)[:]
         close(hfile)
 
+        hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_k.hdf5", "w")
         for k in 1:2
             ens_means_tas, ens_means_pr = get_ens_vars(d, true_ens_gmt; get_means=true, k=k)
-            hfile = h5open("data/$(parent_folder)/ens_vars_$(scenario)_k.hdf5", "w")
             write(hfile, "ens_means_tas_k$(k)", ens_means_tas)
             write(hfile, "ens_means_pr_k$(k)", ens_means_pr)
-            write(hfile, "d", d)
-            close(hfile)
         end
+        write(hfile, "d", d)
+        close(hfile)
     end
 end
