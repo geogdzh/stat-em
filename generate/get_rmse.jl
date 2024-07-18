@@ -42,7 +42,7 @@ function calculate_rmse(numbers, variable, scenarios; rel_error=false, for_k=fal
     # println("working on $(variable) and d = $(numbers[1]) and for_k is $(for_k)")
     # flush(stdout) 
     if non_dim #is this gonna be necessary? maybe not
-        hfile = h5open("data/$parent_folder/basis_1000d.hdf5", "r") 
+        hfile = h5open("data/$parent_folder/basis_2000d.hdf5", "r") 
         factor = read(hfile, "$(variable)_factor")
         close(hfile)
     end

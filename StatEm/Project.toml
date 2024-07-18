@@ -2,3 +2,6 @@ name = "StatEm"
 uuid = "ffcd21dc-b818-4de9-9ff0-8fa0744283b4"
 authors = ["m-geo <mgeo@mit.edu>"]
 version = "0.1.0"
+
+[deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
