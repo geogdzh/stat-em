@@ -13,20 +13,25 @@ d = parse(Int, ARGS[2])
 #     d = 10 #CHANGE DEFAULT
 # end
 
-using_precip = true 
-non_dim = true
+using_two = true 
+second_var = "huss" # "pr" or "huss"
+non_dim = false  
 use_metrics = false
-if using_precip
-    parent_folder = "temp_precip"
+if using_two
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
 if non_dim
-    parent_folder = "nondim"     ### not current implemented
+    parent_folder = "nondim"
 end
-if use_metrics && using_precip
-    parent_folder = "metrics"    ### not current implemented    
-elseif use_metrics && !using_precip
+if use_metrics && using_two
+    parent_folder = "metrics"
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
@@ -41,7 +46,9 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
     basis = read(hfile, "basis")
     if non_dim
         temp_factor = read(hfile, "temp_factor")
-        pr_factor = read(hfile, "pr_factor")
+        if using_two
+            pr_factor = read(hfile, "pr_factor")
+        end
     end
     if use_metrics
         metric = read(hfile, "metric") 
@@ -61,7 +68,7 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
                 end
                 # ens_vars_tas[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[1:M*N,:], M, N) ./ sqrt.(metric) : shape_data(data[1:M*N,:], M, N)
                 ens_vars_tas[:,:,(m-1)*12+n] = non_dim ? shape_data(data[1:M*N,:], M, N) .* temp_factor : shape_data(data[1:M*N,:], M, N)
-                if using_precip
+                if using_two
                     # ens_vars_pr[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[M*N+1:end,:], M, N) ./ sqrt.(metric) : shape_data(data[M*N+1:end,:], M, N)
                     ens_vars_pr[:,:,(m-1)*12+n] = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor : shape_data(data[M*N+1:end,:], M, N)
                 end
@@ -72,16 +79,16 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
                 data = sum([co[:,:,n][i,j].*basis[:,i].*basis[:,j] for i in 1:d, j in 1:d]) 
 
                 # ens_vars_tas[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[1:M*N,:], M, N) ./ sqrt.(metric) : shape_data(data[1:M*N,:], M, N)
-                ens_vars_tas[:,:,(m-1)*12+n] = shape_data(data[1:M*N,:], M, N) .* temp_factor^2 # is this correct??
-                if using_precip
+                ens_vars_tas[:,:,(m-1)*12+n] = non_dim ? shape_data(data[1:M*N,:], M, N) .* temp_factor^2 : shape_data(data[1:M*N,:], M, N)
+                if using_two
                     # ens_vars_pr[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[M*N+1:end,:], M, N) ./ sqrt.(metric) : shape_data(data[M*N+1:end,:], M, N)
-                    ens_vars_pr[:,:,(m-1)*12+n] = shape_data(data[M*N+1:end,:], M, N) .* pr_factor^2
+                    ens_vars_pr[:,:,(m-1)*12+n] = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor^2 : shape_data(data[M*N+1:end,:], M, N)
                 end
             end
         end
     end
     println("done")
-    return using_precip ? (ens_vars_tas, ens_vars_pr) : ens_vars_tas
+    return using_two ? (ens_vars_tas, ens_vars_pr) : ens_vars_tas
 end
 
 if param == "d"
@@ -98,7 +105,7 @@ if param == "d"
         
         println("working on $(d)")
         flush(stdout)
-        if using_precip
+        if using_two
             ens_vars_tas, ens_vars_pr = get_ens_vars(d, true_ens_gmt)
             ens_means_tas, ens_means_pr = get_ens_vars(d, true_ens_gmt; get_means=true)
             hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")

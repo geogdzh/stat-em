@@ -11,20 +11,25 @@ L1, L2 = 1980, 1032 #for CMIP6
 l1, l2 = 165, 86
 
 d=10
-using_precip = true 
+using_two = true 
+second_var = "huss" # "pr" or "huss"
 non_dim = false  
 use_metrics = false
-if using_precip
-    parent_folder = "temp_precip"
+if using_two
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
 if non_dim
     parent_folder = "nondim"
 end
-if use_metrics && using_precip
+if use_metrics && using_two
     parent_folder = "metrics"
-elseif use_metrics && !using_precip
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
@@ -82,7 +87,7 @@ begin
             axislegend(ax, position=:rt)
         end
     end
-    # save("figs/before_after_hist.png", fig)
+    # save("figs/$parent_folder/before_after_hist.png", fig)
     
     display(fig)
 end
@@ -118,7 +123,7 @@ begin
             axislegend(ax, elems, labels, position=:lb)
         end
     end
-    # save("figs/jan_mean_fits_10_modes_ssp_comparison.png", fig)
+    # save("figs/$parent_folder/jan_mean_fits_10_modes_ssp_comparison.png", fig)
     display(fig)
 end 
 
@@ -156,6 +161,6 @@ begin
             axislegend(ax, elems, labels, position=:rt)
         end
     end
-    # save("figs/jan_var_fits_10_modes_ssp_comparison.png", fig)
+    # save("figs/$parent_folder/jan_var_fits_10_modes_ssp_comparison.png", fig)
     display(fig)
 end 

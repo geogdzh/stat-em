@@ -11,10 +11,10 @@ ts3 = ncData(file3, "tas")
 lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
 lonvec2 = lonvec .-180.
 
-using_precip = true 
-non_dim = false  
+using_two = true 
+non_dim = true  
 use_metrics = false
-if using_precip
+if using_two
     parent_folder = "temp_precip"
 else
     parent_folder = "temp"
@@ -22,9 +22,9 @@ end
 if non_dim
     parent_folder = "nondim"
 end
-if use_metrics && using_precip
+if use_metrics && using_two
     parent_folder = "metrics"
-elseif use_metrics && !using_precip
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
@@ -60,7 +60,7 @@ function plot_rmse(ax, variable, measure, numbers; testing_k=false, rel_error=fa
         end
     end
 
-    elems = testing_k ? [LineElement(color=:black, linestyle=:solid),LineElement(color=:black, linestyle=:dash)] : [LineElement(color=:black, linestyle=:solid), LineElement(color=:black, linestyle=:dot)]
+    elems = testing_k ? [LineElement(color=:black, linestyle=:dash),LineElement(color=:black, linestyle=:solid)] : [LineElement(color=:black, linestyle=:solid), LineElement(color=:black, linestyle=:dot)]
     elems_2 = [ LineElement(color=scenario_colors["ssp119"]), LineElement(color=scenario_colors["ssp245"]), LineElement(color=scenario_colors["ssp585"])]
     labels = testing_k ? ["k=1",  "k=2"] : [ "100 modes",  "10 modes"]
     labels_2 = [ "SSP119", "SSP245", "SSP585"]
@@ -71,7 +71,7 @@ end
 numbers = [10, 100]
 ks = [x for x in 1:2]
 
-variable = "pr" #temp/pr
+variable = "temp" #temp/pr
 begin 
     fig = Figure(resolution=(1500,1000)) #
     # lims = Dict("temp" => (0.15, 0.6), "pr" => (3e-6, 9e-6))
@@ -110,7 +110,7 @@ begin
         Colorbar(fig[2,12], label="RMSE", colormap=:thermal, colorrange=ext, height = Relative(2/4))
     end
     colsize!(fig.layout, 12, Relative(1/11))
-    save("figs/$(parent_folder)/rmse_joint_$(variable)$(rel_error ? "_rel" : "").png", fig)
+    # save("figs/$(parent_folder)/rmse_joint_$(variable).png", fig)
     fig
 end 
 

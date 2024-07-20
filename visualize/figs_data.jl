@@ -10,22 +10,28 @@ scenario_colors = Dict("historical" => :red4, "ssp585" => :red, "ssp245" => :mag
 M, N = 192, 96
 L1, L2 = 1980, 1032 #for CMIP6
 
-using_precip = true 
+using_two = true 
+second_var = "huss" # "pr" or "huss"
 non_dim = false  
 use_metrics = false
-if using_precip
-    parent_folder = "temp_precip"
+if using_two
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
 if non_dim
     parent_folder = "nondim"
 end
-if use_metrics && using_precip
+if use_metrics && using_two
     parent_folder = "metrics"
-elseif use_metrics && !using_precip
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
+
 
 #get sample timevecs
 file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
@@ -52,7 +58,7 @@ begin
     end
     axislegend(ax, position=:lt)
     display(fig)
-    # save("figs/gmt_scenarios.png", fig)
+    # save("figs/$parent_folder/gmt_scenarios.png", fig)
 end
 
 # fig 2: show the basis
@@ -110,26 +116,10 @@ begin
         end
         axislegend(ex, position=:lb)
 
-        ax2 = GeoAxis(fig[3,n],  title="Mode $i", ylabel=(i==1 ? "Precipitation" : ""))
+        ax2 = GeoAxis(fig[3,n],  title="Mode $i", ylabel=(i==1 ? "Specific humidity" : ""))
         tmp = reshape(basis[M*N+1:end,i], (M, N))
         heatmap!(ax2, lonvec2, latvec, tmp, colormap=:plum)
     end
-    # save("figs/basis_modes.png", fig)
+    # save("figs/$parent_folder/basis_modes.png", fig)
     display(fig)
 end
-
-
-# generate visuals of all the modes
-
-# for i in 200:-1:1
-#     fig = Figure(resolution=(1000,750))
-#     ax = GeoAxis(fig[1,1], title="Mode $i")
-#     tmp = reshape(basis[1:M*N,i], (M, N))
-#     heatmap!(ax, lonvec2, latvec, tmp, colormap=:thermometer)
-#     save("figs/modes_og/temp_mode_$i.png", fig)
-#     # display(fig)
-# end
-
-
-
-## explore gaussianity ? 

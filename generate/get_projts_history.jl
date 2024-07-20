@@ -4,20 +4,25 @@ include("../utils/eof_util.jl")
 include("../utils/emulator_util.jl") 
 
 L1, L2 = 1980, 1032 #for CMIP6
-using_precip = true 
-non_dim = true  
-use_metrics = false # not implemented here!
-if using_precip
-    parent_folder = "temp_precip"
+using_two = true 
+second_var = "huss" # "pr" or "huss"
+non_dim = false  
+use_metrics = false
+if using_two
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
 if non_dim
     parent_folder = "nondim"
 end
-if use_metrics && using_precip
+if use_metrics && using_two
     parent_folder = "metrics"
-elseif use_metrics && !using_precip
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
@@ -26,7 +31,7 @@ hfile = h5open("data/$(parent_folder)/basis_2000d.hdf5", "r") #this basis is cal
 basis = read(hfile, "basis")
 if non_dim
     temp_factor = read(hfile, "temp_factor")
-    if using_precip
+    if using_two
         pr_factor = read(hfile, "pr_factor")
     end
 end
@@ -54,12 +59,12 @@ for scenario in scenarios
             println("working on ensemble member $(i)")
             flush(stdout)
             files = file_head*"$(scenario)/tas/r$(i)i1p1f1_$(scenario)_tas.nc"
-            files_pr = file_head*"$(scenario)/pr/r$(i)i1p1f1_$(scenario)_pr.nc"
+            files_pr = file_head*"$(scenario)/$(second_var)/r$(i)i1p1f1_$(scenario)_$(second_var).nc"
             tmps = ncData(files, "tas")
-            prs = using_precip ? ncData(files_pr, "pr") : nothing
-            if using_precip
+            prs = using_two ? ncData(files_pr, second_var) : nothing
+            if using_two
                 data1 = non_dim ? reshape_data(tmps.data) ./ temp_factor : reshape_data(tmps.data)
-                prdata = log.(prs.data .* 86400)
+                prdata = second_var == "pr" ? log.(prs.data .* 86400) : prs.data
                 data2 = non_dim ? reshape_data(prdata) ./ pr_factor : reshape_data(prdata)
                 data = vcat(data1, data2)
                 projts[:, :, i] =  project_timeseries(data, basis, reshaped=true)
@@ -86,7 +91,7 @@ for scenario in scenarios
     write(hfile, "num_ens_members", num_ens_members)
     if non_dim
         write(hfile, "temp_factor", temp_factor)
-        if using_precip
+        if using_two
             write(hfile, "pr_factor", pr_factor)
         end
     end

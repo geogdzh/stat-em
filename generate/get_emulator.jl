@@ -7,20 +7,25 @@ L1, L2 = 1980, 1032 #for CMIP6
 scenario = "ssp585"
 offload = false
 
-using_precip = true 
-non_dim = true  
+using_two = true 
+second_var = "huss" # "pr" or "huss"
+non_dim = false  
 use_metrics = false
-if using_precip
-    parent_folder = "temp_precip"
+if using_two
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
 if non_dim
     parent_folder = "nondim"
 end
-if use_metrics && using_precip
+if use_metrics && using_two
     parent_folder = "metrics"
-elseif use_metrics && !using_precip
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
@@ -30,7 +35,7 @@ hfile = h5open("data/$(parent_folder)/basis_2000d.hdf5", "r") #this basis is cal
 basis = read(hfile, "basis")
 if non_dim ##none of this is actually used here
     temp_factor = read(hfile, "temp_factor")
-    if using_precip
+    if using_two
         pr_factor = read(hfile, "pr_factor")
     end
 end
@@ -69,7 +74,7 @@ write(hfile, "chol_coefs", chol_coefs)
 write(hfile, "basis", basis)
 if non_dim
     write(hfile, "temp_factor", temp_factor)
-    if using_precip
+    if using_two
         write(hfile, "pr_factor", pr_factor)
     end
 end

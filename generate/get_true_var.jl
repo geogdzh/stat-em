@@ -6,9 +6,10 @@ include("../utils/emulator_util.jl")
 M, N = 192, 96
 L1, L2 = 1980, 1032
 
-scenarios = ["ssp585", "ssp370", "ssp245", "ssp126", "ssp119", "historical",]
+# scenarios = ["ssp585", "ssp370", "ssp245", "ssp126", "ssp119", "historical"]
+scenarios = ["ssp245", "ssp119", "historical",]
 global num_ens_members = 50
-variables = ["tas", "pr"]
+variables = ["huss"]#["tas", "pr"]
 
 parent_folder = "ground_truth"
 

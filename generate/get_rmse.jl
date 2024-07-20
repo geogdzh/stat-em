@@ -12,20 +12,25 @@ ts3 = ncData(file3, "tas")
 lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
 lonvec2 = lonvec .-180.
 
-using_precip = true 
-non_dim = true  
+using_two = true 
+second_var = "huss" # "pr" or "huss"
+non_dim = false  
 use_metrics = false
-if using_precip
-    parent_folder = "temp_precip"
+if using_two
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
 if non_dim
     parent_folder = "nondim"
 end
-if use_metrics && using_precip
+if use_metrics && using_two
     parent_folder = "metrics"
-elseif use_metrics && !using_precip
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
@@ -38,21 +43,16 @@ L1, L2 = 1980, 1032
 l1, l2 = 165, 86
 
 
-function calculate_rmse(numbers, variable, scenarios; rel_error=false, for_k=false)
+function calculate_rmse(numbers, true_variable, scenarios; rel_error=false, for_k=false)
     # println("working on $(variable) and d = $(numbers[1]) and for_k is $(for_k)")
     # flush(stdout) 
-    if non_dim #is this gonna be necessary? maybe not
-        hfile = h5open("data/$parent_folder/basis_2000d.hdf5", "r") 
-        factor = read(hfile, "$(variable)_factor")
-        close(hfile)
-    end
-
-    variable = variable == "temp" ? "tas" : "pr"
+ 
+    variable = true_variable == "temp" ? "tas" : "pr" #pr is just the label at this point, could be whatever the second variable is
 
     for scenario in scenarios[2:end]
         # once we have the emulator and have saved out the emulator ensemble vars/means etc; calculate the rmse compared to various scenarios
 
-        hfile = h5open("data/ground_truth/vars_$(variable)_$(scenario)_50ens.hdf5", "r") # true CMIP vars
+        hfile = h5open("data/ground_truth/vars_$(true_variable)_$(scenario)_50ens.hdf5", "r") # true CMIP vars
         true_var = read(hfile, "true_var")
         true_ens_mean = read(hfile, "true_ens_mean")[:,:,:,1]
         close(hfile)
@@ -79,11 +79,6 @@ function calculate_rmse(numbers, variable, scenarios; rel_error=false, for_k=fal
 
                 ens_means =  read(hfile, "ens_means_$(variable)_$(number)")
                 ens_vars = read(hfile, "ens_vars_$(variable)_$(number)")
-
-                # if non_dim #DOUBLE CHECK!
-                #     ens_means = ens_means .* factor
-                #     ens_vars = ens_vars .* factor.^2
-                # end
 
                 rmse_stds = sqrt.(sum((sqrt.(true_var) .- sqrt.(ens_vars)).^2, dims=3)[:,:,1]./size(true_var)[3]) #time average rmse (shaped as a map)
                 rmse_stds_time = sqrt.(weighted_avg((sqrt.(true_var) .- sqrt.(ens_vars)).^2, latvec)) #spatial average rmse (shaped as a timeseries)

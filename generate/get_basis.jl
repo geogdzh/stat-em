@@ -3,20 +3,25 @@ include("../utils/data_util.jl")
 include("../utils/eof_util.jl")
 
 #### get basis - based ONLY on one ens memeber (should this be substantiated?)
-using_precip = true 
-non_dim = true  
+using_two = true 
+second_var = "huss" # "pr" or "huss"
+non_dim = false  
 use_metrics = false
-if using_precip
-    parent_folder = "temp_precip"
+if using_two
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
 if non_dim
     parent_folder = "nondim"
 end
-if use_metrics && using_precip
+if use_metrics && using_two
     parent_folder = "metrics"
-elseif use_metrics && !using_precip
+elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
@@ -44,14 +49,20 @@ M, N, L2 = size(use_metrics ? sqrt.(metric) .* ts2.data : ts2.data)
 
 fullX = hcat(X, X2)
 
-if using_precip
-    phfile = file_head*"historical/pr/r10i1p1f1_historical_pr.nc"
-    pr = ncData(phfile, "pr")
-    Xp = reshape_data(use_metrics ? sqrt.(metric) .* log.(pr.data .* 86400) : log.(pr.data .* 86400)) # use log of precip to normalize and convert to mm/day
+if using_two
+    phfile = file_head*"historical/$(second_var)/r10i1p1f1_historical_$(second_var).nc"
+    pr = ncData(phfile, second_var)
+    Xp = reshape_data(use_metrics ? sqrt.(metric) .* pr.data : pr.data) # use log of precip to normalize and convert to mm/day
+    if second_var == "pr"
+        Xp = log.(Xp .* 86400)
+    end
 
-    phfile2 = file_head*"ssp585/pr/r10i1p1f1_ssp585_pr.nc"
-    pr2 = ncData(phfile2, "pr")
-    Xp2 = reshape_data(use_metrics ? sqrt.(metric) .* log.(pr2.data .* 86400) : log.(pr2.data .* 86400)) # same as above
+    phfile2 = file_head*"ssp585/$(second_var)/r10i1p1f1_ssp585_$(second_var).nc"
+    pr2 = ncData(phfile2, second_var)
+    Xp2 = reshape_data(use_metrics ? sqrt.(metric) .* pr2.data : pr2.data) # same as above
+    if second_var == "pr"
+        Xp2 = log.(Xp2 .* 86400)
+    end
 
     fullXp = hcat(Xp, Xp2)
 end
@@ -60,7 +71,7 @@ if non_dim
     temp_factor = maximum(X)
     X = X ./ temp_factor
     X2 = X2 ./ temp_factor
-    if using_precip
+    if using_two
         pr_factor = maximum(Xp)
         Xp = Xp ./ pr_factor
         Xp2 = Xp2 ./ pr_factor
@@ -68,7 +79,7 @@ if non_dim
 end
 
 
-full = using_precip ? vcat(fullX, fullXp) : fullX
+full = using_two ? vcat(fullX, fullXp) : fullX
 U, S, V = svd(full)
 d = 2000
 basis = U[:,1:d]
