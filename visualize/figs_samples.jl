@@ -45,33 +45,34 @@ sampling_indices[6,:] = get_indices(174, 176, -38, -36, ts3) #auckland, nz
 sampling_labels = ["Chicago, USA", "Manaus, Brazil", "Kano, Nigeria", "Inari, Finland", "Dhaka, Bhangladesh", "Auckland, NZ"]
 
 #### start with: real data PDFs for precip and temp
-num_ens_members = 50
-for variable in ["tas"]
-    # points = zeros(6, num_ens_members, L2)
-    points = zeros(6, num_ens_members, 120)
-    for n in 1:num_ens_members
-        file = file_head*"ssp585/$(variable)/r$(n)i1p1f1_ssp585_$(variable).nc"
-        ts = ncData(file, variable)
-        data = variable == "pr" ? log.(ts.data .* 86400) : ts.data .* 1.0
-        for ind in 1:6
-            subset = data[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], end-119:end]
-            avg = mean(subset, dims=(1,2))[:]
-            points[ind, n, :] = avg
-        end
-    end
-    hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_50ens.hdf5", "w")
-    write(hfile, "end_points", points)
-    # write(hfile, "points", points)
-    write(hfile, "indices", sampling_indices)
-    write(hfile, "labels", sampling_labels)
-    close(hfile)
-end
+# num_ens_members = 50
+# for variable in ["tas"]
+#     # points = zeros(6, num_ens_members, L2)
+#     points = zeros(6, num_ens_members, 120)
+#     for n in 1:num_ens_members
+#         file = file_head*"ssp585/$(variable)/r$(n)i1p1f1_ssp585_$(variable).nc"
+#         ts = ncData(file, variable)
+#         data = variable == "pr" ? log.(ts.data .* 86400) : ts.data .* 1.0
+#         for ind in 1:6
+#             subset = data[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], end-119:end]
+#             avg = mean(subset, dims=(1,2))[:]
+#             points[ind, n, :] = avg
+#         end
+#     end
+#     hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_50ens.hdf5", "w")
+#     write(hfile, "end_points", points)
+#     # write(hfile, "points", points)
+#     write(hfile, "indices", sampling_indices)
+#     write(hfile, "labels", sampling_labels)
+#     close(hfile)
+# end
 
 #####
 
 num_ens_members = 50
-variable = "tas"
+variable = "huss"
 
+#model normal approximation
 hfile = h5open("data/ground_truth/vars_$(variable)_ssp585_50ens.hdf5", "r") # true CMIP vars incl means
 true_var = read(hfile, "true_var")
 true_ens_mean = read(hfile, "true_ens_mean")
@@ -85,11 +86,30 @@ for ind in 1:6
     sample_vars[ind, :] = mean(slice, dims=(1,2))[:] 
 end
 
+## emulator approximation
+hfile = h5open("data/$parent_folder/ens_vars/ens_vars_ssp585_100d.hdf5", "r")
+ens_means_tas = read(hfile, "ens_means_tas_100")
+ens_vars_tas = read(hfile, "ens_vars_tas_100")
+ens_means_two = read(hfile, "ens_means_pr_100")
+ens_vars_two = read(hfile, "ens_vars_pr_100")
+close(hfile)
+
+sample_ens_means = zeros(6, l2)
+sample_ens_vars = zeros(6, l2)
+for ind in 1:6
+    slice = ens_means_two[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
+    sample_ens_means[ind, :] = mean(slice, dims=(1,2))[:]
+    slice = ens_vars_two[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
+    sample_ens_vars[ind, :] = mean(slice, dims=(1,2))[:] 
+end
+
+
 
 hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_50ens.hdf5", "r")
 # points = read(hfile, "points")
 end_points = read(hfile, "end_points")
 close(hfile)
+
 begin
     data = end_points[:,:,1:12:end]# looking only at January!
     fig = Figure(resolution=(1000,750)) #title="Specific Humidity in January 2095-2100"
@@ -111,6 +131,11 @@ begin
             # var = mean(sample_vars[ind, :])
             # dist = Normal(μ, sqrt(var))
             plot!(ax, dist, label="True distribution", color=:red)
+
+            params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
+            dist2 = MixtureModel(Normal, params2)
+            plot!(ax, dist2, label="Emulator distribution", color=:blue)
+
         end
     end
     # save("figs/ground_truth/$(variable)_samples.png", fig)

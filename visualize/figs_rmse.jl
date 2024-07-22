@@ -12,10 +12,15 @@ lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
 lonvec2 = lonvec .-180.
 
 using_two = true 
-non_dim = true  
+second_var = "huss" # "pr" or "huss"
+non_dim = false  
 use_metrics = false
 if using_two
-    parent_folder = "temp_precip"
+    if second_var == "pr"
+        parent_folder = "temp_precip"
+    else
+        parent_folder = "temp_huss"
+    end
 else
     parent_folder = "temp"
 end
@@ -71,22 +76,22 @@ end
 numbers = [10, 100]
 ks = [x for x in 1:2]
 
-variable = "temp" #temp/pr
+variable = "pr" #temp/pr
 begin 
     fig = Figure(resolution=(1500,1000)) #
     # lims = Dict("temp" => (0.15, 0.6), "pr" => (3e-6, 9e-6))
 
     rel_error = false # if true, remove ylims settings
     measure = "mean"
-    ax = Axis(fig[1,1:4], title="a) Average RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "precipitation") for varied # of modes", xlabel="Year", ylabel="RMSE")
+    ax = Axis(fig[1,1:4], title="a) Average RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "specific humidity") for varied # of modes", xlabel="Year", ylabel="RMSE")
     # ylims!(ax, lims[variable])
     plot_rmse(ax, variable, measure, numbers; rel_error=rel_error)
-    ax = Axis(fig[1,5:8], title="b) Average RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "precipitation") for varied degree of fit", xlabel="Year")
+    ax = Axis(fig[1,5:8], title="b) Average RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "specific humidity") for varied degree of fit", xlabel="Year")
     # ylims!(ax, lims[variable])
     plot_rmse(ax, variable, measure, ks; rel_error=rel_error, testing_k=true)
     
 
-    ax = GeoAxis(fig[2,1:5], title="d) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "precipitation") on SSP119")
+    ax = GeoAxis(fig[2,1:5], title="d) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "specific humidity") on SSP119")
     hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r") #toggle here
     begin
         data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
@@ -97,10 +102,10 @@ begin
     end 
 
     measure = "std"
-    ax = Axis(fig[1,9:12], title="c) Average RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "precipitation") for varied # of modes", xlabel="Year")
+    ax = Axis(fig[1,9:12], title="c) Average RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "specific humidity") for varied # of modes", xlabel="Year")
     plot_rmse(ax, variable, measure, numbers; rel_error=rel_error)
     
-    ax = GeoAxis(fig[2,7:11], title="e) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "precipitation") on SSP119")
+    ax = GeoAxis(fig[2,7:11], title="e) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "specific humidity") on SSP119")
     hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r") #toggle here
     begin
         data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
