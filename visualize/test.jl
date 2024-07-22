@@ -418,8 +418,8 @@ ens_means_tas = read(hfile, "ens_means_pr_100")
 ens_vars_tas = read(hfile, "ens_vars_pr_100")
 close(hfile)
 
-avg_std = sum(sqrt.(ens_vars_tas), dims=3)[:,:,1]./size(true_var)[3]
-avg_mean = sum(ens_means_tas, dims=3)[:,:,1]./size(true_ens_mean)[3]
+avg_std = sum(sqrt.(ens_vars_tas), dims=3)[:,:,1]./size(ens_vars_tas)[3]
+avg_mean = sum(ens_means_tas, dims=3)[:,:,1]./size(ens_means_tas)[3]
 
 begin
     fig = Figure(resolution=(1500, 1000))
@@ -431,6 +431,28 @@ begin
     heatmap!(ax, lonvec2, latvec, avg_mean, colormap=:thermal)
     ext = extrema(avg_mean)
     Colorbar(fig[2,2], label="Mean", colormap=:thermal, colorrange=ext, height = Relative(2/4))
-    # save("figs/temp_huss/ens_huss_std_mean.png", fig)
+    save("figs/temp_huss/ens_huss_std_mean_100.png", fig)
     display(fig)
 end
+
+
+#####
+
+parent_folder = "temp_precip"
+
+hfile = h5open("data/$parent_folder/gaussian_emulator_ssp585_10d.hdf5", "r")
+mean_coefs_1_10d = read(hfile, "mean_coefs_1")
+mean_coefs_2_10d = read(hfile, "mean_coefs_2")
+chol_coefs_10d = read(hfile, "chol_coefs")
+basis_10d = read(hfile, "basis")
+close(hfile)
+
+hfile = h5open("data/$parent_folder/gaussian_emulator_ssp585_100d.hdf5", "r")
+mean_coefs_1_100d = read(hfile, "mean_coefs_1")
+mean_coefs_2_100d = read(hfile, "mean_coefs_2")
+chol_coefs_100d = read(hfile, "chol_coefs")
+basis_100d = read(hfile, "basis")
+close(hfile)
+
+# isapprox(mean_coefs_1_10d, mean_coefs_1_100d)
+mean_coefs_1_10d == mean_coefs_1_100d[:,1:10,:]

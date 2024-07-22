@@ -61,7 +61,7 @@ function calculate_rmse(numbers, true_variable, scenarios; rel_error=false, for_
         
         if for_k
             hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_k.hdf5", "r") #emulator vars - this includes means
-
+  
             for number in numbers
                 ens_means = read(hfile, "ens_means_$(variable)_k$(number)")
 
@@ -98,7 +98,7 @@ function calculate_rmse(numbers, true_variable, scenarios; rel_error=false, for_
     end
 end
 
-for variable in ["temp", "pr"]
+for variable in ["temp", "huss"]
     rel_error = false
 
     numbers = [10, 100]

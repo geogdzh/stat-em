@@ -47,7 +47,7 @@ l1, l2 = 165, 86
 function plot_rmse(ax, variable, measure, numbers; testing_k=false, rel_error=false)
     variable = variable == "temp" ? "tas" : "pr"
 
-    linestyles = testing_k ? [ :solid, :dash, :dashdot] : [ :dot, :solid]
+    linestyles = testing_k ? [  :dash, :solid] : [ :dot, :solid]
     for (j, scenario) in enumerate(scenarios[2:end])
         for (i, number) in enumerate(numbers)
             hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$(scenario).hdf5", "r") #toggle "updated" here
@@ -94,7 +94,7 @@ begin
     ax = GeoAxis(fig[2,1:5], title="d) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "specific humidity") on SSP119")
     hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r") #toggle here
     begin
-        data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
+        data =  read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
         close(hfile)
         ext = (0., maximum(data))
         heatmap!(ax, lonvec2, latvec, data[:,:,1], colormap=:thermal, colorrange=ext)
@@ -108,7 +108,7 @@ begin
     ax = GeoAxis(fig[2,7:11], title="e) RMSE of the ensemble $(measure) \n for $(variable == "temp" ? "temperature" : "specific humidity") on SSP119")
     hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r") #toggle here
     begin
-        data = rel_error ? read(hfile, "rmse_$(measure)s_$(variable)_100_rel") : read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
+        data = read(hfile, "rmse_$(measure)s_$(variable == "temp" ? "tas" : variable)_100") #CHANGE BACK
         close(hfile)
         ext = (0., maximum(data))
         heatmap!(ax, lonvec2, latvec, data[:,:,1], colormap=:thermal, colorrange=ext)
@@ -118,120 +118,3 @@ begin
     # save("figs/$(parent_folder)/rmse_joint_$(variable).png", fig)
     fig
 end 
-
-
-
-####### gridlayout
-# begin
-#     fig = Figure() #resolution=(1500,1000)
-#     top = GridLayout()
-#     bottom = GridLayout()
-#     # top[1, 1:3] = [Axis(fig) for j in 1:3]
-#     f.layout[1, 1] = top
-#     f.layout[2, 1] = bottom
-
-#     measure = "mean"
-#     top[1,1] = Axis(fig, title="Average RMSE of the ensemble $(measure) for $(variable == "temp" ? "temperature" : "precipitation")", xlabel="Year", ylabel="RMSE")
-#     plot_rmse(top[1,1], variable, measure, numbers)
-#     top[1,2] = Axis(fig)
-#     plot_rmse(top[1,2], variable, measure, ks; testing_k=true)
-
-#     bottom[1,1] = GeoAxis(fig, title="RMSE of the ensemble $(measure) for $(variable == "temp" ? "temperature" : "precipitation") on SSP119")
-#     hfile = h5open("data/temp_precip/ens_vars_withpr_rmse_$("ssp119").hdf5", "r")
-#     begin
-#         data = sqrt.(read(hfile, "rmse_$(measure)s_$(variable)_100"))
-#         close(hfile)
-#         ext = (0., maximum(data))
-#         heatmap!(bottom[1,1], lonvec2, latvec, data, colormap=:thermal, colorrange=ext)
-#         Colorbar(bottom[1,2], label="RMSE", colormap=:thermal, colorrange=ext, height = Relative(2/4))
-#     end
-#     measure = "var"
-
-#     top[1,3] = Axis(fig, title="Average RMSE of the ensemble $(measure=="var" ? "std" : measure) for $(variable == "temp" ? "temperature" : "precipitation")", xlabel="Year", ylabel="RMSE")
-#     plot_rmse(top[1,3], variable, measure, numbers)
-    
-#     bottom[1,3] = GeoAxis(fig, title="RMSE of the ensemble $(measure=="var" ? "std" : measure) for $(variable == "temp" ? "temperature" : "precipitation") on SSP119")
-#     hfile = h5open("data/temp_precip/ens_vars_withpr_rmse_$("ssp119").hdf5", "r")
-#     begin
-#         data = sqrt.(read(hfile, "rmse_$(measure)s_$(variable)_100"))
-#         close(hfile)
-#         ext = (0., maximum(data))
-#         heatmap!(bottom[1,3], lonvec2, latvec, data, colormap=:thermal, colorrange=ext)
-#         Colorbar(bottom[1,4], label="RMSE", colormap=:thermal, colorrange=ext, height = Relative(2/4))
-#     end
-
-#     fig
-#     # save("figs/rmse_joint_$(variable).png", fig)
-# end 
-
-hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$("ssp119")_k.hdf5", "r")
-ens_means_119 = read(hfile, "ens_means_$("tas")_k2")
-close(hfile)
-hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$("ssp585")_k.hdf5", "r")
-ens_means_585 = read(hfile, "ens_means_$("tas")_k2")
-close(hfile)
-
-size(ens_means_119)
-heatmap(ens_means_119[:,:,1000])
-heatmap(ens_means_585[:,:,1000])
-
-ens_means_119[:,:,200] == ens_means_585[:,:,200]
-
-isapprox(ens_means_119, ens_means_585)
-
-#
-hfile = h5open("data/$("ssp119")_gmts_50ens.hdf5", "r") 
-ens_gmt_119 = read(hfile, "ens_gmt")
-true_ens_gmt_119 = mean(ens_gmt_119, dims=1)[:]
-close(hfile)
-hfile = h5open("data/$("ssp585")_gmts_50ens.hdf5", "r")
-ens_gmt_585 = read(hfile, "ens_gmt")
-true_ens_gmt_585 = mean(ens_gmt_585, dims=1)[:]
-close(hfile)
-begin
-    fig = Figure()
-    ax = Axis(fig[1,1])
-    lines!(ax, time_future, true_ens_gmt_119, color=:red, label="SSP119")
-    lines!(ax, time_future, true_ens_gmt_585, color=:blue, label="SSP585")
-    fig
-end
-
-####
-
-size(ens_means_119)
-ens_means_time_119 = (weighted_avg(ens_means_119, latvec))
-ens_means_time_585 = (weighted_avg(ens_means_585, latvec))
-begin
-    fig = Figure()
-    ax = Axis(fig[1,1])
-    lines!(ax, time_future, ens_means_time_119, color=:red, label="SSP119")
-    lines!(ax, time_future, ens_means_time_585, color=:blue, label="SSP585")
-    lines!(ax, time_future, true_ens_gmt_119, color=:red, linestyle=:dash, label="SSP119")
-    lines!(ax, time_future, true_ens_gmt_585, color=:blue, linestyle=:dash, label="SSP585")
-    lines!(ax, time_future, true_ens_mean_119_time, color=:red, linestyle=:dot, label="SSP119")
-    lines!(ax, time_future, true_ens_mean_585_time, color=:blue, linestyle=:dot, label="SSP585")
-    fig
-end
-
-hfile = h5open("data/ground_truth/vars_tas_ssp119_50ens.hdf5", "r") # true CMIP vars
-true_ens_mean_119 = read(hfile, "true_ens_mean")
-close(hfile)
-hfile = h5open("data/ground_truth/vars_tas_ssp585_50ens.hdf5", "r") # true CMIP vars
-true_ens_mean_585 = read(hfile, "true_ens_mean")
-close(hfile)
-true_ens_mean_119_time = (weighted_avg(true_ens_mean_119, latvec))
-true_ens_mean_585_time = (weighted_avg(true_ens_mean_585, latvec))
-
-true_ens_mean_585_time .- ens_means_time_585
-
-rmse_119 = sqrt.(weighted_avg((true_ens_mean_119.-ens_means_119).^2, latvec))
-lines(month_to_year_avg(rmse_119))
-rmse_585 = sqrt.(weighted_avg((true_ens_mean_585.-ens_means_585).^2, latvec))
-
-begin
-    fig = Figure()
-    ax = Axis(fig[1,1])
-    lines!(ax, time_future, month_to_year_avg(rmse_119), color=:red, label="SSP119")
-    lines!(ax, time_future, month_to_year_avg(rmse_585), color=:blue, label="SSP585")
-    fig
-end
