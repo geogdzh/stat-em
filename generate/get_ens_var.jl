@@ -13,10 +13,10 @@ d = parse(Int, ARGS[2])
 #     d = 10 #CHANGE DEFAULT
 # end
 
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = false  
-use_metrics = false
+using_two = (ARGS[3] == "true" )
+second_var = ARGS[4] # "pr" or "huss"
+non_dim = (ARGS[5] == "true" )  
+use_metrics = (ARGS[6] == "true" )
 if using_two
     if second_var == "pr"
         parent_folder = "temp_precip"
@@ -66,23 +66,26 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
                 elseif k==2
                     data = back_to_data(mean_coefs[n,:,2].*true_ens_gmt[m] .+ mean_coefs[n, :, 1] .+ mean_coefs[n,:,3].*true_ens_gmt[m].^2, basis)
                 end
-                # ens_vars_tas[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[1:M*N,:], M, N) ./ sqrt.(metric) : shape_data(data[1:M*N,:], M, N)
-                ens_vars_tas[:,:,(m-1)*12+n] = non_dim ? shape_data(data[1:M*N,:], M, N) .* temp_factor : shape_data(data[1:M*N,:], M, N)
+                newdata = non_dim ? shape_data(data[1:M*N,:], M, N) .* temp_factor : shape_data(data[1:M*N,:], M, N)
+                newdata = use_metrics ? newdata ./ sqrt.(metric) : newdata
+                ens_vars_tas[:,:,(m-1)*12+n] = newdata
                 if using_two
-                    # ens_vars_pr[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[M*N+1:end,:], M, N) ./ sqrt.(metric) : shape_data(data[M*N+1:end,:], M, N)
-                    ens_vars_pr[:,:,(m-1)*12+n] = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor : shape_data(data[M*N+1:end,:], M, N)
+                    new2data = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor : shape_data(data[M*N+1:end,:], M, N)
+                    new2data = use_metrics ? new2data ./ sqrt.(metric) : new2data
+                    ens_vars_pr[:,:,(m-1)*12+n] = new2data
                 end
             end
         else
             co = get_cov(true_ens_gmt[m], chol_coefs) 
             for n in 1:12
                 data = sum([co[:,:,n][i,j].*basis[:,i].*basis[:,j] for i in 1:d, j in 1:d]) 
-
-                # ens_vars_tas[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[1:M*N,:], M, N) ./ sqrt.(metric) : shape_data(data[1:M*N,:], M, N)
-                ens_vars_tas[:,:,(m-1)*12+n] = non_dim ? shape_data(data[1:M*N,:], M, N) .* temp_factor^2 : shape_data(data[1:M*N,:], M, N)
+                newdata = non_dim ? shape_data(data[1:M*N,:], M, N) .* temp_factor^2 : shape_data(data[1:M*N,:], M, N)
+                newdata =  use_metrics ? newdata ./ sqrt.(metric) : newdata
+                ens_vars_tas[:,:,(m-1)*12+n] = newdata
                 if using_two
-                    # ens_vars_pr[:,:,(m-1)*12+n] = use_metrics ? shape_data(data[M*N+1:end,:], M, N) ./ sqrt.(metric) : shape_data(data[M*N+1:end,:], M, N)
-                    ens_vars_pr[:,:,(m-1)*12+n] = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor^2 : shape_data(data[M*N+1:end,:], M, N)
+                    new2data = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor^2 : shape_data(data[M*N+1:end,:], M, N)
+                    new2data = use_metrics ? new2data ./ sqrt.(metric) : new2data
+                    ens_vars_pr[:,:,(m-1)*12+n] = new2data
                 end
             end
         end

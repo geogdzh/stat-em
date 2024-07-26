@@ -12,10 +12,10 @@ ts3 = ncData(file3, "tas")
 lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
 lonvec2 = lonvec .-180.
 
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = false  
-use_metrics = false
+using_two = (ARGS[1] == "true" )
+second_var = ARGS[2] # "pr" or "huss"
+non_dim = (ARGS[3] == "true" )  
+use_metrics = (ARGS[4] == "true" )
 if using_two
     if second_var == "pr"
         parent_folder = "temp_precip"

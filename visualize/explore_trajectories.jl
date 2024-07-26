@@ -39,6 +39,12 @@ hfile = h5open("data/$(parent_folder)/gaussian_emulator_ssp585_$(d)d.hdf5", "r")
 mean_coefs = read(hfile, "mean_coefs_1")
 chol_coefs = read(hfile, "chol_coefs")
 basis = read(hfile, "basis")
+if non_dim
+    temp_factor = read(hfile, "temp_factor")
+    if using_two
+        pr_factor = read(hfile, "pr_factor")
+    end
+end
 close(hfile)
 
 #get gmt list
@@ -53,7 +59,8 @@ trajectories = zeros(M, N, L2, num_ens_members)
 for n in 1:num_ens_members
     traj = emulate(gmts, mean_coefs, chol_coefs)
     datatraj = back_to_data(traj, basis) # it's not implemented to work with quadratic yet
-    trajectories[:,:,:,n] = shape_data(datatraj[M*N+1:end, :], M, N, true)
+    trajectories[:,:,:,n] = shape_data(datatraj[1:M*N, :], M, N, true) .* temp_factor
+    # trajectories[:,:,:,n] = shape_data(datatraj[M*N+1:end, :], M, N, true) .* pr_factor
 end
 
 endtime = time_future[end-59:end]

@@ -3,10 +3,10 @@ include("../utils/data_util.jl")
 include("../utils/eof_util.jl")
 
 #### get basis - based ONLY on one ens memeber (should this be substantiated?)
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = false  
-use_metrics = false
+using_two = (ARGS[1] == "true" )
+second_var = ARGS[2] # "pr" or "huss"
+non_dim = (ARGS[3] == "true" )  
+use_metrics = (ARGS[4] == "true" )
 if using_two
     if second_var == "pr"
         parent_folder = "temp_precip"
@@ -24,6 +24,7 @@ if use_metrics && using_two
 elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
+
 
 file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
 
@@ -88,7 +89,9 @@ hfile = h5open("data/$(parent_folder)/basis_$(d)d.hdf5", "w") #but to use a smal
 write(hfile, "basis", basis)
 if non_dim
     write(hfile, "temp_factor", temp_factor)
-    write(hfile, "pr_factor", pr_factor)
+    if using_two
+        write(hfile, "pr_factor", pr_factor)
+    end
 end
 if use_metrics
     write(hfile, "metric", metric)

@@ -4,10 +4,10 @@ include("../utils/eof_util.jl")
 include("../utils/emulator_util.jl") 
 
 L1, L2 = 1980, 1032 #for CMIP6
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = false  
-use_metrics = false
+using_two = (ARGS[2] == "true" )
+second_var = ARGS[3] # "pr" or "huss"
+non_dim = (ARGS[4] == "true" )  
+use_metrics = (ARGS[5] == "true" )
 if using_two
     if second_var == "pr"
         parent_folder = "temp_precip"
@@ -63,13 +63,19 @@ for scenario in scenarios
             tmps = ncData(files, "tas")
             prs = using_two ? ncData(files_pr, second_var) : nothing
             if using_two
-                data1 = non_dim ? reshape_data(tmps.data) ./ temp_factor : reshape_data(tmps.data)
-                prdata = second_var == "pr" ? log.(prs.data .* 86400) : prs.data
-                data2 = non_dim ? reshape_data(prdata) ./ pr_factor : reshape_data(prdata)
+                data1 = use_metrics ? sqrt.(metric) .* tmps.data : tmps.data
+                data1 = non_dim ? reshape_data(data1) ./ temp_factor : reshape_data(data1)
+
+                prdata = second_var == "pr" ? log.(prs.data .* 86400) : prs.data #only applies it if using precip
+                data2 = use_metrics ? sqrt.(metric) .* prdata : prdata
+                data2 = non_dim ? reshape_data(data2) ./ pr_factor : reshape_data(data2)
                 data = vcat(data1, data2)
                 projts[:, :, i] =  project_timeseries(data, basis, reshaped=true)
             else
                 projts[:, :, i] =  non_dim ? project_timeseries(tmps.data, basis) ./ temp_factor : project_timeseries(tmps.data, basis)
+                if use_metrics
+                    throw("metrics not implemented for single variable")
+                end
             end
             ens_gmt[i, :] = get_gmt_list(tmps) 
         catch
@@ -94,6 +100,9 @@ for scenario in scenarios
         if using_two
             write(hfile, "pr_factor", pr_factor)
         end
+    end
+    if use_metrics
+        write(hfile, "metric", metric)
     end
     close(hfile)
 end

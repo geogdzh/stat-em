@@ -228,9 +228,9 @@ function emulate(gmt_list, mean_coefs, chol_coefs; no_cov=false)
     gmt = gmt_list[1]
     covs = get_cov(gmt, chol_coefs)
     means = get_means(gmt, mean_coefs) #list of twelve
-
-    dec = means[:,12]
-    trajectory[:,1] = emulate_step(dec, 12, covs, means; new_means=means, no_cov=no_cov) #think again aobut whether or not this makes sense
+    Σ = covs[1:d,1:d,12]
+    dec = rand(MvNormal(means[:,12], Σ))
+    trajectory[:,1] = emulate_step(dec, 12, covs, means; new_means=means, no_cov=no_cov)
 
     for year in 1:num_years #year is an index
         for i in 1:11 #here i is the prev_month

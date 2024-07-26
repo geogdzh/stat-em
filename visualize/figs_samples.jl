@@ -132,9 +132,9 @@ begin
             # dist = Normal(μ, sqrt(var))
             plot!(ax, dist, label="True distribution", color=:red)
 
-            params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
-            dist2 = MixtureModel(Normal, params2)
-            plot!(ax, dist2, label="Emulator distribution", color=:blue)
+            # params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
+            # dist2 = MixtureModel(Normal, params2)
+            # plot!(ax, dist2, label="Emulator distribution", color=:blue)
 
         end
     end

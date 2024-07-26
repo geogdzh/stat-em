@@ -13,7 +13,7 @@ l1, l2 = 165, 86
 d=10
 using_two = true 
 second_var = "huss" # "pr" or "huss"
-non_dim = false  
+non_dim = true  
 use_metrics = false
 if using_two
     if second_var == "pr"
@@ -104,7 +104,7 @@ begin
         for i in 1:num_ens_members
             scatter!(ax, ens_gmt[1:l1], ens_projts[mode, mon:12:L1, i], markersize=5, alpha=0.3, color=scenario_colors["historical"], label="historical") 
             scatter!(ax, ens_gmt[l1+1:end], ens_projts[mode, L1+mon:12:end, i], markersize=5, alpha=0.3, color=scenario_colors["ssp585"], label="ssp585") 
-            # scatter!(ax, ens_gmt_119[:], ens_projts_119[mode, mon:12:end, i], markersize=5, alpha=0.3, color=scenario_colors["ssp119"], label= "ssp119")
+            scatter!(ax, ens_gmt_119[:], ens_projts_119[mode, mon:12:end, i], markersize=5, alpha=0.3, color=scenario_colors["ssp119"], label= "ssp119")
 
 
             # scatter!(ax, ens_gmt[1:l1], month_to_year_avg(ens_projts[mode, 1:L1, i]), markersize=5, alpha=0.3, color=scenario_colors["historical"]) 
@@ -146,7 +146,7 @@ begin
         for i in 1:num_ens_members
             scatter!(ax, ens_gmt[1:l1], sqrt.(vars[mon, mode, i, 1:l1]), markersize=5, alpha=0.3, color=scenario_colors["historical"], label="historical") 
             scatter!(ax, ens_gmt[l1+1:end], sqrt.(vars[mon, mode, i, l1+1:end]), markersize=5, alpha=0.3, color=scenario_colors["ssp585"], label="ssp585") 
-            # scatter!(ax, ens_gmt_119[:], sqrt.(vars_119[mon, mode, i, :]), markersize=5, alpha=0.3, color=scenario_colors["ssp119"], label="ssp119")
+            scatter!(ax, ens_gmt_119[:], sqrt.(vars_119[mon, mode, i, :]), markersize=5, alpha=0.3, color=scenario_colors["ssp119"], label="ssp119")
             
             if mode == 1 && i == 1
                 axislegend(ax, position=:rt)
@@ -163,6 +163,6 @@ begin
             axislegend(ax, elems, labels, position=:rt)
         end
     end
-    # save("figs/$parent_folder/jan_var_fits_10_modes_ssp_comparison.png", fig)
+    save("figs/$parent_folder/jan_var_fits_10_modes_ssp_comparison.png", fig)
     display(fig)
 end 

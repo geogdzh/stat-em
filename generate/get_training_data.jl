@@ -4,10 +4,10 @@ include("../utils/eof_util.jl")
 include("../utils/emulator_util.jl")
 
 L1, L2 = 1980, 1032 #for CMIP6
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = false  
-use_metrics = false
+using_two = (ARGS[2] == "true" )
+second_var = ARGS[3] # "pr" or "huss"
+non_dim = (ARGS[4] == "true" )  
+use_metrics = (ARGS[5] == "true" )
 if using_two
     if second_var == "pr"
         parent_folder = "temp_precip"
@@ -25,7 +25,6 @@ if use_metrics && using_two
 elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
-
 d = parse(Int, ARGS[1])
 scenario = "ssp585"
 

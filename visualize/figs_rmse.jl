@@ -76,7 +76,7 @@ end
 numbers = [10, 100]
 ks = [x for x in 1:2]
 
-variable = "pr" #temp/pr
+variable = "temp" #temp/pr
 begin 
     fig = Figure(resolution=(1500,1000)) #
     # lims = Dict("temp" => (0.15, 0.6), "pr" => (3e-6, 9e-6))

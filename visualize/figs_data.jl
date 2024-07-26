@@ -12,7 +12,7 @@ L1, L2 = 1980, 1032 #for CMIP6
 
 using_two = true 
 second_var = "huss" # "pr" or "huss"
-non_dim = false  
+non_dim = true  
 use_metrics = false
 if using_two
     if second_var == "pr"
@@ -78,7 +78,7 @@ for i in 1:10
     basis_trends_history[:,:,i,1] = projts[i,:,:]
 end
 for (j,scenario) in enumerate(scenarios[2:end]) #this except it doesn't really exist
-    hfile = h5open("data/temp_precip/projts_$(scenario)_10d_50ens.hdf5", "r")
+    hfile = h5open("data/$(parent_folder)/projts_$(scenario)_10d_50ens.hdf5", "r")
     projts = read(hfile, "projts")
     close(hfile)
     for i in 1:10
@@ -107,7 +107,7 @@ begin
         end
         mean_trend = month_to_year_avg(mean(basis_trends_history[:,:,i,1], dims=2))
         lines!(ex, time_history, mean_trend, color=scenario_colors["historical"], alpha=1, linestyle=:solid, linewidth=2, label="historical")
-        for (j, scenario) in enumerate(scenarios[2:end])
+        for (j, scenario) in enumerate(scenarios[2:end]) #CHANGE BACK
             for x in 1:50
                 lines!(ex, time_future, month_to_year_avg(basis_trends_future[:,x,i,j]), color=scenario_colors[scenario], alpha=0.1, linestyle=:dot)
             end

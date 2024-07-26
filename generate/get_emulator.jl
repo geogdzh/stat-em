@@ -7,10 +7,10 @@ L1, L2 = 1980, 1032 #for CMIP6
 scenario = "ssp585"
 offload = false
 
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = false  
-use_metrics = false
+using_two = (ARGS[2] == "true" )
+second_var = ARGS[3] # "pr" or "huss"
+non_dim = (ARGS[4] == "true" )  
+use_metrics = (ARGS[5] == "true" )
 if using_two
     if second_var == "pr"
         parent_folder = "temp_precip"
@@ -29,11 +29,10 @@ elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end
 
-
 ######### load in basis
 hfile = h5open("data/$(parent_folder)/basis_2000d.hdf5", "r") #this basis is calculated from just one ens member
 basis = read(hfile, "basis")
-if non_dim ##none of this is actually used here
+if non_dim ##none of this is actually used here though
     temp_factor = read(hfile, "temp_factor")
     if using_two
         pr_factor = read(hfile, "pr_factor")
