@@ -453,3 +453,7 @@ close(hfile)
 
 true_ens_mean_tas/temp_factor
 true_ens_mean
+
+##
+file = "/net/fs06/d3/mgeo/CMIP6/raw/$(scenario)/$("hurs")/r$(1)i1p1f1/$("hurs")_Amon_MPI-ESM1-2-LR_$(scenario)_r1i1p1f1_gn_$(1850)01-$(1869)12.nc" 
+ncgen(file, "hurssample.jl")

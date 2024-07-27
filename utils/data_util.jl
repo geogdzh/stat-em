@@ -1,5 +1,17 @@
 using Dates, NCDatasets
 
+function apply_transform(data, variable)
+    if variable == "pr"
+        return log.(data .* 86400) # use log of precip to normalize and convert to mm/day
+    elseif variable == "huss"
+        return log.(data)
+    elseif variable == "hurs"
+        return log.(data)
+    else
+        return data
+    end
+end
+
 
 function find_closest(vec, value)
     #finds index of closest value in vector

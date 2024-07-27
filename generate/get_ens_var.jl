@@ -1,41 +1,3 @@
-using ProgressBars, HDF5
-include("../utils/data_util.jl")
-include("../utils/eof_util.jl")
-include("../utils/emulator_util.jl") 
-
-scenarios = ["historical", "ssp585", "ssp245", "ssp119"]
-
-param = ARGS[1]
-d = parse(Int, ARGS[2])
-# if param == "d"
-#     d = parse(Int, ARGS[2])
-# else #if testing k 
-#     d = 10 #CHANGE DEFAULT
-# end
-
-using_two = (ARGS[3] == "true" )
-second_var = ARGS[4] # "pr" or "huss"
-non_dim = (ARGS[5] == "true" )  
-use_metrics = (ARGS[6] == "true" )
-if using_two
-    if second_var == "pr"
-        parent_folder = "temp_precip"
-    else
-        parent_folder = "temp_huss"
-    end
-else
-    parent_folder = "temp"
-end
-if non_dim
-    parent_folder = "nondim"
-end
-if use_metrics && using_two
-    parent_folder = "metrics"
-elseif use_metrics && !using_two
-    parent_folder = "temp_metrics"
-end
-
-
 function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
     M = 192
     N = 96
@@ -47,7 +9,7 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
     if non_dim
         temp_factor = read(hfile, "temp_factor")
         if using_two
-            pr_factor = read(hfile, "pr_factor")
+            two_factor = read(hfile, "two_factor")
         end
     end
     if use_metrics
@@ -55,7 +17,7 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
     end
     close(hfile)
     ens_vars_tas = zeros(M, N, L)
-    ens_vars_pr = zeros(M, N, L)
+    ens_vars_two = zeros(M, N, L)
     for m in ProgressBar(1:Int(L/12))
         println("working on year $(m)")
         flush(stdout)
@@ -70,9 +32,9 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
                 newdata = use_metrics ? newdata ./ sqrt.(metric) : newdata
                 ens_vars_tas[:,:,(m-1)*12+n] = newdata
                 if using_two
-                    new2data = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor : shape_data(data[M*N+1:end,:], M, N)
+                    new2data = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* two_factor : shape_data(data[M*N+1:end,:], M, N)
                     new2data = use_metrics ? new2data ./ sqrt.(metric) : new2data
-                    ens_vars_pr[:,:,(m-1)*12+n] = new2data
+                    ens_vars_two[:,:,(m-1)*12+n] = new2data
                 end
             end
         else
@@ -83,15 +45,15 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
                 newdata =  use_metrics ? newdata ./ sqrt.(metric) : newdata
                 ens_vars_tas[:,:,(m-1)*12+n] = newdata
                 if using_two
-                    new2data = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* pr_factor^2 : shape_data(data[M*N+1:end,:], M, N)
+                    new2data = non_dim ? shape_data(data[M*N+1:end,:], M, N) .* two_factor^2 : shape_data(data[M*N+1:end,:], M, N)
                     new2data = use_metrics ? new2data ./ sqrt.(metric) : new2data
-                    ens_vars_pr[:,:,(m-1)*12+n] = new2data
+                    ens_vars_two[:,:,(m-1)*12+n] = new2data
                 end
             end
         end
     end
     println("done")
-    return using_two ? (ens_vars_tas, ens_vars_pr) : ens_vars_tas
+    return using_two ? (ens_vars_tas, ens_vars_two) : ens_vars_tas
 end
 
 if param == "d"
@@ -100,7 +62,7 @@ if param == "d"
         println("working on $(scenario)")
         flush(stdout)
         #get the true gmt
-        hfile = h5open("data/$(scenario)_gmts_50ens.hdf5", "r") 
+        hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
         ens_gmt = read(hfile, "ens_gmt")
         true_ens_gmt = mean(ens_gmt, dims=1)[:]
         close(hfile)
@@ -109,13 +71,13 @@ if param == "d"
         println("working on $(d)")
         flush(stdout)
         if using_two
-            ens_vars_tas, ens_vars_pr = get_ens_vars(d, true_ens_gmt)
-            ens_means_tas, ens_means_pr = get_ens_vars(d, true_ens_gmt; get_means=true)
+            ens_vars_tas, ens_vars_two = get_ens_vars(d, true_ens_gmt)
+            ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true)
             hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
             write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
-            write(hfile, "ens_vars_pr_$(d)", ens_vars_pr)
+            write(hfile, "ens_vars_two_$(d)", ens_vars_two)
             write(hfile, "ens_means_tas_$(d)", ens_means_tas)
-            write(hfile, "ens_means_pr_$(d)", ens_means_pr)
+            write(hfile, "ens_means_two_$(d)", ens_means_two)
             close(hfile)
         else
             ens_vars_tas = get_ens_vars(d, true_ens_gmt)
@@ -132,16 +94,16 @@ elseif param == "k"
     for scenario in scenarios[2:end] 
         println("working on $(scenario)")
         flush(stdout)
-        hfile = h5open("data/$(scenario)_gmts_50ens.hdf5", "r") 
+        hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
         ens_gmt = read(hfile, "ens_gmt")
         true_ens_gmt = mean(ens_gmt, dims=1)[:]
         close(hfile)
 
         hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_k.hdf5", "w")
         for k in 1:2
-            ens_means_tas, ens_means_pr = get_ens_vars(d, true_ens_gmt; get_means=true, k=k)
+            ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true, k=k)
             write(hfile, "ens_means_tas_k$(k)", ens_means_tas)
-            write(hfile, "ens_means_pr_k$(k)", ens_means_pr)
+            write(hfile, "ens_means_two_k$(k)", ens_means_two)
         end
         write(hfile, "d", d)
         close(hfile)

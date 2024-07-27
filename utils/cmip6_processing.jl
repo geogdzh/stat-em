@@ -1,20 +1,27 @@
 #usage: pass in which scenario (number in list) you want to process as an argument
 
 using NCDatasets, HDF5, ProgressBars, DataStructures
-include("utils/data_util.jl")
+include("data_util.jl")
 
-filehead =  "/net/fs06/d3/lutjens/bc3/data/raw/CMIP6/MPI-ESM1-2-LR/"
+# filehead =  "/net/fs06/d3/lutjens/bc3/data/raw/CMIP6/MPI-ESM1-2-LR/"
+# num_ens_members = 50
+filehead = "/net/fs06/d3/mgeo/CMIP6/raw/"
+num_ens_members = 30
 
 scenarios = ["historical", "ssp585", "ssp370", "ssp245", "ssp126", "ssp119"]
 scenario = scenarios[parse(Int64, ARGS[1])]
 println("processing scenario: $scenario")
-variables = ["tas", "pr", "huss"]
+variables = ["tas", "pr", "huss", "hurs"]
 variable = variables[parse(Int64, ARGS[2])]
 println("processing variables: $variable")
 flush(stdout)
 sample_year = scenario == "historical" ? 1850 : 2015
 
-sample_filetail = "r$(1)i1p1f1/$(scenario)/$(variable)/250_km/mon/$(sample_year)/CMIP6_MPI-ESM1-2-LR_r$(1)i1p1f1_$(scenario)_$(variable)_250_km_mon_gn_$(sample_year).nc" #for historical tas
+if occursin("lutjens",filehead)
+    sample_filetail = "r$(1)i1p1f1/$(scenario)/$(variable)/250_km/mon/$(sample_year)/CMIP6_MPI-ESM1-2-LR_r$(1)i1p1f1_$(scenario)_$(variable)_250_km_mon_gn_$(sample_year).nc" #for historical tas
+elseif occursin("mgeo",filehead)
+    sample_filetail = "$(scenario)/$(variable)/r$(1)i1p1f1/$(variable)_Amon_MPI-ESM1-2-LR_$(scenario)_r1i1p1f1_gn_$(sample_year)01-$(sample_year+19)12.nc" #for historical tas
+end
 sample_file = filehead * sample_filetail
 sample_ds = Dataset(sample_file)
 latvec = sample_ds["lat"][:]
@@ -30,20 +37,46 @@ M = length(lonvec)
 N = length(latvec)
 
 ###
-for ens_ind in 1:50
+for ens_ind in 1:num_ens_members
     println("working on ensemble member $ens_ind")
     flush(stdout)
-    years = scenario == "historical" ? [x for x in 1850:2014] : [x for x in 2015:2100]
-    fulldata = fill(missing, (M, N, length(years)*12))
+    
+    allyears = scenario == "historical" ? [x for x in 1850:2014] : [x for x in 2015:2100]
+    fulldata = fill(missing, (M, N, length(allyears)*12))
     fulldata = Array{Union{Missing, Float32}}(fulldata)
-    fulltime = Vector{DateTime}(undef, length(years)*12)
-    for (i, year) in enumerate(years)
-        filetail = "r$(ens_ind)i1p1f1/$(scenario)/$(variable)/250_km/mon/$year/CMIP6_MPI-ESM1-2-LR_r$(ens_ind)i1p1f1_$(scenario)_$(variable)_250_km_mon_gn_$year.nc" 
-        file = filehead * filetail
-        ds = Dataset(file)
-        fulldata[:,:,12*(i-1)+1:12*i] = ds[variable][:,:,:]
-        fulltime[12*(i-1)+1:12*i] = ds["time"][:]
-        close(ds)
+    fulltime = Vector{DateTime}(undef, length(allyears)*12)
+
+    if occursin("lutjens",filehead)
+
+        years = scenario == "historical" ? [x for x in 1850:2014] : [x for x in 2015:2100]
+        for (i, year) in enumerate(years)
+            filetail = "r$(ens_ind)i1p1f1/$(scenario)/$(variable)/250_km/mon/$year/CMIP6_MPI-ESM1-2-LR_r$(ens_ind)i1p1f1_$(scenario)_$(variable)_250_km_mon_gn_$year.nc" 
+            file = filehead * filetail
+            ds = Dataset(file)
+            fulldata[:,:,12*(i-1)+1:12*i] = ds[variable][:,:,:]
+            fulltime[12*(i-1)+1:12*i] = ds["time"][:]
+            close(ds)
+        end
+    elseif occursin("mgeo",filehead)
+        years = scenario == "historical" ? [x for x in 1850:20:2010] : [x for x in 2015:20:2095]
+        for (i, year) in enumerate(years)
+            year_end = i != length(years) ? year+19 : (scenario == "historical" ? year+4 : year+5)
+            filetail = "$(scenario)/$(variable)/r$(ens_ind)i1p1f1/$(variable)_Amon_MPI-ESM1-2-LR_$(scenario)_r$(ens_ind)i1p1f1_gn_$(year)01-$(year_end)12.nc" 
+            file = filehead * filetail
+            try
+                ds = Dataset(file)
+                if i != length(years)
+                    fulldata[:,:,12*20*(i-1)+1:12*20*i] = ds[variable][:,:,:]
+                    fulltime[12*20*(i-1)+1:12*20*i] = ds["time"][:]
+                else
+                    fulldata[:,:,12*20*(i-1)+1:end] = ds[variable][:,:,:]
+                    fulltime[12*20*(i-1)+1:end] = ds["time"][:]
+                end
+                close(ds)
+            catch e
+                println(e)
+            end
+        end
     end
 
     newnc = "/net/fs06/d3/mgeo/CMIP6/interim/$(scenario)/$(variable)/r$(ens_ind)i1p1f1_$(scenario)_$(variable).nc"
@@ -225,6 +258,21 @@ for ens_ind in 1:50
         ))
 
         # nchuss[:,:,:] = fulldata
+
+    elseif variable == "hurs"
+        nchurs = defVar(ds,"hurs", fulldata, ("lon", "lat", "time"), attrib = OrderedDict(
+            "standard_name"             => "relative_humidity",
+            "long_name"                 => "Near-Surface Relative Humidity",
+            "comment"                   => "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+            "units"                     => "%",
+            "history"                   => "2019-09-11T14:13:17Z altered by CMOR: Treated scalar dimension: 'height'. 2019-09-11T14:13:17Z altered by CMOR: replaced missing value flag (-9e+33) and corresponding data with standard missing value (1e+20). 2019-09-11T14:13:18Z altered by CMOR: Inverted axis: lat. 2020-01-15T10:33:51Z altered by CMOR: Converted units from '1' to '%'. 2020-01-15T10:33:51Z altered by CMOR: Treated scalar dimension: 'height'.",
+            "original_units"            => "1",
+            "cell_methods"              => "area: time: mean",
+            "cell_measures"             => "area: areacella",
+            "coordinates"               => "height",
+            "missing_value"             => Float32(1.0e20),
+            "_FillValue"                => Float32(1.0e20),
+        ))
     end
 
     # Define variables

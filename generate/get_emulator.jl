@@ -1,33 +1,5 @@
-using HDF5
-include("../utils/data_util.jl")
-include("../utils/eof_util.jl")
-include("../utils/emulator_util.jl")
-
-L1, L2 = 1980, 1032 #for CMIP6
 scenario = "ssp585"
 offload = false
-
-using_two = (ARGS[2] == "true" )
-second_var = ARGS[3] # "pr" or "huss"
-non_dim = (ARGS[4] == "true" )  
-use_metrics = (ARGS[5] == "true" )
-if using_two
-    if second_var == "pr"
-        parent_folder = "temp_precip"
-    else
-        parent_folder = "temp_huss"
-    end
-else
-    parent_folder = "temp"
-end
-if non_dim
-    parent_folder = "nondim"
-end
-if use_metrics && using_two
-    parent_folder = "metrics"
-elseif use_metrics && !using_two
-    parent_folder = "temp_metrics"
-end
 
 ######### load in basis
 hfile = h5open("data/$(parent_folder)/basis_2000d.hdf5", "r") #this basis is calculated from just one ens member
@@ -35,21 +7,19 @@ basis = read(hfile, "basis")
 if non_dim ##none of this is actually used here though
     temp_factor = read(hfile, "temp_factor")
     if using_two
-        pr_factor = read(hfile, "pr_factor")
+        two_factor = read(hfile, "two_factor")
     end
 end
 if use_metrics
     metric = read(hfile, "metric")
 end
 close(hfile)
-d = parse(Int, ARGS[1])
 basis = basis[:, 1:d]
 
 ########## load in training data
-hfile = h5open("data/$(parent_folder)/training_data_$(scenario)_$(d)d_49ens.hdf5", "r")
+hfile = h5open("data/$(parent_folder)/training_data_$(scenario)_$(d)d_$(num_ens_members)ens.hdf5", "r")
 ens_projts = read(hfile, "projts")[1:d, :, :]
 ens_gmt = read(hfile, "ens_gmt")
-num_ens_members = read(hfile, "num_ens_members")
 close(hfile)
 
 ########## get the emulator itself
@@ -74,12 +44,11 @@ write(hfile, "basis", basis)
 if non_dim
     write(hfile, "temp_factor", temp_factor)
     if using_two
-        write(hfile, "pr_factor", pr_factor)
+        write(hfile, "two_factor", two_factor)
     end
 end
 if use_metrics
     write(hfile, "metric", metric)
 end
-write(hfile, "num_ens_members", num_ens_members)
 write(hfile, "ens_gmt", ens_gmt)
 close(hfile)

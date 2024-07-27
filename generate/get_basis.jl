@@ -1,31 +1,4 @@
-using LinearAlgebra, HDF5
-include("../utils/data_util.jl")
-include("../utils/eof_util.jl")
-
-#### get basis - based ONLY on one ens memeber (should this be substantiated?)
-using_two = (ARGS[1] == "true" )
-second_var = ARGS[2] # "pr" or "huss"
-non_dim = (ARGS[3] == "true" )  
-use_metrics = (ARGS[4] == "true" )
-if using_two
-    if second_var == "pr"
-        parent_folder = "temp_precip"
-    else
-        parent_folder = "temp_huss"
-    end
-else
-    parent_folder = "temp"
-end
-if non_dim
-    parent_folder = "nondim"
-end
-if use_metrics && using_two
-    parent_folder = "metrics"
-elseif use_metrics && !using_two
-    parent_folder = "temp_metrics"
-end
-
-
+#### get basis - based only on one ens memeber
 file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
 
 #first ensemble member of historical run
@@ -52,20 +25,15 @@ fullX = hcat(X, X2)
 
 if using_two
     phfile = file_head*"historical/$(second_var)/r10i1p1f1_historical_$(second_var).nc"
-    pr = ncData(phfile, second_var)
-    Xp = reshape_data(use_metrics ? sqrt.(metric) .* pr.data : pr.data) # use log of precip to normalize and convert to mm/day
-    if second_var == "pr"
-        Xp = log.(Xp .* 86400)
-    end
+    two = ncData(phfile, second_var)
+    Xp = reshape_data(use_metrics ? sqrt.(metric) .* two.data : two.data) 
 
     phfile2 = file_head*"ssp585/$(second_var)/r10i1p1f1_ssp585_$(second_var).nc"
-    pr2 = ncData(phfile2, second_var)
-    Xp2 = reshape_data(use_metrics ? sqrt.(metric) .* pr2.data : pr2.data) # same as above
-    if second_var == "pr"
-        Xp2 = log.(Xp2 .* 86400)
-    end
+    two2 = ncData(phfile2, second_var)
+    Xp2 = reshape_data(use_metrics ? sqrt.(metric) .* two2.data : two2.data)
 
     fullXp = hcat(Xp, Xp2)
+    fullXp = apply_transform(fullXp, second_var)
 end
 
 if non_dim
@@ -73,12 +41,11 @@ if non_dim
     X = X ./ temp_factor
     X2 = X2 ./ temp_factor
     if using_two
-        pr_factor = maximum(Xp)
-        Xp = Xp ./ pr_factor
-        Xp2 = Xp2 ./ pr_factor
+        two_factor = maximum(Xp)
+        Xp = Xp ./ two_factor
+        Xp2 = Xp2 ./ two_factor
     end
 end
-
 
 full = using_two ? vcat(fullX, fullXp) : fullX
 U, S, V = svd(full)
@@ -90,7 +57,7 @@ write(hfile, "basis", basis)
 if non_dim
     write(hfile, "temp_factor", temp_factor)
     if using_two
-        write(hfile, "pr_factor", pr_factor)
+        write(hfile, "two_factor", two_factor)
     end
 end
 if use_metrics
