@@ -73,17 +73,19 @@ num_ens_members = 50
 variable = "huss"
 
 #model normal approximation
-hfile = h5open("data/ground_truth/vars_$(variable)_ssp585_50ens.hdf5", "r") # true CMIP vars incl means
-true_var = read(hfile, "true_var")
-true_ens_mean = read(hfile, "true_ens_mean")
-close(hfile)
-sample_means = zeros(6, l2)
-sample_vars = zeros(6, l2)
-for ind in 1:6
-    slice = true_ens_mean[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-    sample_means[ind, :] = mean(slice, dims=(1,2))[:]
-    slice = true_var[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-    sample_vars[ind, :] = mean(slice, dims=(1,2))[:] 
+begin
+    hfile = h5open("data/ground_truth/vars_$(variable)_ssp585_50ens.hdf5", "r") # true CMIP vars incl means
+    true_var = read(hfile, "true_var")
+    true_ens_mean = read(hfile, "true_ens_mean")
+    close(hfile)
+    sample_means = zeros(6, l2)
+    sample_vars = zeros(6, l2)
+    for ind in 1:6
+        slice = true_ens_mean[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
+        sample_means[ind, :] = mean(slice, dims=(1,2))[:]
+        slice = true_var[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
+        sample_vars[ind, :] = mean(slice, dims=(1,2))[:] 
+    end
 end
 
 ## emulator approximation
@@ -98,11 +100,12 @@ sample_ens_means = zeros(6, l2)
 sample_ens_vars = zeros(6, l2)
 for ind in 1:6
     slice = ens_means_two[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-    sample_ens_means[ind, :] = mean(slice, dims=(1,2))[:]
+    sample_ens_means[ind, :] = mean(slice, dims=(1,2))[:] #./ pr_factor
     slice = ens_vars_two[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-    sample_ens_vars[ind, :] = mean(slice, dims=(1,2))[:] 
+    sample_ens_vars[ind, :] = mean(slice, dims=(1,2))[:]  #./ pr_factor^2
 end
 
+variable = "tas"
 
 
 hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_50ens.hdf5", "r")
@@ -122,23 +125,16 @@ begin
 # 
             # add the distribution
             params = [(sample_means[ind, x], sqrt(sample_vars[ind, x])) for x in 76:86]
-            # for x in 76:86
-            #     push!(params, (sample_means[ind, x], sqrt(sample_vars[ind, x])))
-            # end
             dist = MixtureModel(Normal, params)
-                
-            # μ = mean(sample_means[ind, :]) #is this how it works???
-            # var = mean(sample_vars[ind, :])
-            # dist = Normal(μ, sqrt(var))
             plot!(ax, dist, label="True distribution", color=:red)
 
-            # params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
-            # dist2 = MixtureModel(Normal, params2)
-            # plot!(ax, dist2, label="Emulator distribution", color=:blue)
+            params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
+            dist2 = MixtureModel(Normal, params2)
+            plot!(ax, dist2, label="Emulator distribution", color=:blue)
 
         end
     end
-    # save("figs/ground_truth/$(variable)_samples.png", fig)
+    save("figs/$parent_folder/$(variable)_samples.png", fig)
     display(fig)
 end
 

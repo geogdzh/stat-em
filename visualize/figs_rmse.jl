@@ -13,7 +13,7 @@ lonvec2 = lonvec .-180.
 
 using_two = true 
 second_var = "huss" # "pr" or "huss"
-non_dim = false  
+non_dim = true  
 use_metrics = false
 if using_two
     if second_var == "pr"
@@ -76,7 +76,7 @@ end
 numbers = [10, 100]
 ks = [x for x in 1:2]
 
-variable = "temp" #temp/pr
+variable = "pr" #temp/pr
 begin 
     fig = Figure(resolution=(1500,1000)) #
     # lims = Dict("temp" => (0.15, 0.6), "pr" => (3e-6, 9e-6))
@@ -115,6 +115,6 @@ begin
         Colorbar(fig[2,12], label="RMSE", colormap=:thermal, colorrange=ext, height = Relative(2/4))
     end
     colsize!(fig.layout, 12, Relative(1/11))
-    # save("figs/$(parent_folder)/rmse_joint_$(variable).png", fig)
+    save("figs/$(parent_folder)/rmse_joint_$(variable).png", fig)
     fig
 end 

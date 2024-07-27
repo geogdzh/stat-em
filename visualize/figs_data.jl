@@ -12,8 +12,8 @@ L1, L2 = 1980, 1032 #for CMIP6
 
 using_two = true 
 second_var = "huss" # "pr" or "huss"
-non_dim = true  
-use_metrics = false
+non_dim = false  
+use_metrics = true
 if using_two
     if second_var == "pr"
         parent_folder = "temp_precip"
@@ -96,25 +96,27 @@ begin
         ax = GeoAxis(fig[1,n], title="Mode $i", ylabel=(i==1 ? "Temperature" : ""))
         tmp = reshape(basis[1:M*N,i], (M, N))
         if n == 1
-            heatmap!(ax, lonvec2, latvec, tmp, colormap=:thermometer, colorrange=(minimum(tmp)*1.5, maximum(tmp)))
+            heatmap!(ax, lonvec2, latvec,  tmp, colormap=:thermometer, colorrange=(minimum(tmp)*1.5, maximum(tmp)))
         else
             heatmap!(ax, lonvec2, latvec, tmp, colormap=:thermometer)
         end
 
         ex = Axis(fig[2,n], xlabel="Year", ylabel=(i==1 ? "Coefficient of mode (annual mean)" : ""), title="Mode $i")
         for x in 1:49
-            lines!(ex, time_history, month_to_year_avg(basis_trends_history[:,x,i,1]), color=scenario_colors["historical"], alpha=0.1, linestyle=:dot)
+            lines!(ex, time_history, (n==1 ? -1 : 1) .* month_to_year_avg(basis_trends_history[:,x,i,1]), color=scenario_colors["historical"], alpha=0.1, linestyle=:dot)
         end
-        mean_trend = month_to_year_avg(mean(basis_trends_history[:,:,i,1], dims=2))
+        mean_trend = (n==1 ? -1 : 1) .* month_to_year_avg(mean(basis_trends_history[:,:,i,1], dims=2)) 
         lines!(ex, time_history, mean_trend, color=scenario_colors["historical"], alpha=1, linestyle=:solid, linewidth=2, label="historical")
-        for (j, scenario) in enumerate(scenarios[2:end]) #CHANGE BACK
+        for (j, scenario) in enumerate(scenarios[2:end]) 
             for x in 1:50
-                lines!(ex, time_future, month_to_year_avg(basis_trends_future[:,x,i,j]), color=scenario_colors[scenario], alpha=0.1, linestyle=:dot)
+                lines!(ex, time_future, (n==1 ? -1 : 1) .* month_to_year_avg(basis_trends_future[:,x,i,j]), color=scenario_colors[scenario], alpha=0.1, linestyle=:dot)
             end
-            mean_trend = month_to_year_avg(mean(basis_trends_future[:,:,i,j], dims=2))
+            mean_trend = (n==1 ? -1 : 1) .* month_to_year_avg(mean(basis_trends_future[:,:,i,j], dims=2))
             lines!(ex, time_future, mean_trend, color=scenario_colors[scenario], alpha=1, linestyle=:solid, linewidth=2, label=scenario)
         end
-        axislegend(ex, position=:lb)
+        if n==1
+            axislegend(ex, position=:lt)
+        end
 
         ax2 = GeoAxis(fig[3,n],  title="Mode $i", ylabel=(i==1 ? "Specific humidity" : ""))
         tmp = reshape(basis[M*N+1:end,i], (M, N))

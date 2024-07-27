@@ -78,8 +78,9 @@ for scenario in scenarios
                 end
             end
             ens_gmt[i, :] = get_gmt_list(tmps) 
-        catch
-            println("missing values in ensemble member $(i)")
+        catch e
+            showerror(stdout, e)
+            # println("missing values in ensemble member $(i)")
             push!(errors, i)
             flush(stdout)
         end

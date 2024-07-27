@@ -125,7 +125,7 @@ begin
             axislegend(ax, elems, labels, position=:lb)
         end
     end
-    # save("figs/$parent_folder/jan_mean_fits_10_modes_ssp_comparison.png", fig)
+    save("figs/$parent_folder/jan_mean_fits_10_modes_ssp_comparison.png", fig)
     display(fig)
 end 
 
@@ -163,6 +163,6 @@ begin
             axislegend(ax, elems, labels, position=:rt)
         end
     end
-    save("figs/$parent_folder/jan_var_fits_10_modes_ssp_comparison.png", fig)
+    # save("figs/$parent_folder/jan_var_fits_10_modes_ssp_comparison.png", fig)
     display(fig)
 end 
