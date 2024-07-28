@@ -1,34 +1,4 @@
-using CairoMakie, ProgressBars, HDF5, GeoMakie
-include("utils.jl")
-include("eof_util.jl")
-include("emulator_util.jl") 
-
-scenarios = ["historical", "ssp585", "ssp245", "ssp119"]
-scenario_colors = Dict("historical" => :red4, "ssp585" => :red, "ssp245" => :magenta3, "ssp119" => :indigo)
-time_history = [x for x in 1850:2014]
-time_future = [x for x in 2015:2100]
-L1, L2 = 1980, 1032 #for CMIP6
-l1, l2 = 165, 86
-M, N = 192, 96
-
-using_two = true 
-non_dim = false  
-use_metrics = false
-if using_two
-    parent_folder = "temp_precip"
-else
-    parent_folder = "temp"
-end
-if non_dim
-    parent_folder = "nondim"
-end
-if use_metrics && using_two
-    parent_folder = "metrics"
-elseif use_metrics && !using_two
-    parent_folder = "temp_metrics"
-end
-
-d = 20
+d = 100
 
 hfile = using_two ? h5open("data/$(parent_folder)/temp_precip_basis_2000d.hdf5", "r") : h5open("data/$(parent_folder)/temp_basis_2000d.hdf5", "r") #this basis is calculated from just one ens member
 basis = read(hfile, "basis")
@@ -57,56 +27,6 @@ ens_gmt = read(hfile, "ens_gmt")
 close(hfile)
 ens_gmt = mean(ens_gmt, dims=1)[:]
 
-# T1 = ens_gmt[1]
-# T2 = ens_gmt[end]
-
-
-# co = get_cov(T1, chol_coefs)
-# tempmeans1 = zeros(12)
-# prmeans1 = zeros(12)
-# tempstds1 = zeros(12)
-# prstds1 = zeros(12)
-# for n in 1:12
-#     data = back_to_data(mean_coefs[n,:,2].*T1 .+ mean_coefs[n, :, 1], basis)
-#     tempdata = shape_data(data[1:M*N,:], M, N)
-#     prdata = shape_data(data[M*N+1:end,:], M, N)
-#     tempmeans1[n] = tempdata[18, 83]
-#     prmeans1[n] = prdata[18, 83]
-#     # vardata = sum([co[:,:,n][i,j].*basis[:,i].*basis[:,j] for i in 1:d, j in 1:d])
-#     # tempvardata = shape_data(vardata[1:M*N], M, N)
-#     # prvardata = shape_data(vardata[M*N+1:end], M, N)
-#     # tempstds1[n] = tempvardata[18, 83]
-#     # prstds1[n] = prvardata[18, 83]
-# end
-# co = get_cov(T2, chol_coefs)
-# tempmeans2 = zeros(12)
-# prmeans2 = zeros(12)
-# tempstds2 = zeros(12)
-# prstds2 = zeros(12)
-# for n in 1:12
-#     data = back_to_data(mean_coefs[n,:,2].*T2 .+ mean_coefs[n, :, 1], basis)
-#     tempdata = shape_data(data[1:M*N,:], M,N)
-#     prdata = shape_data(data[M*N+1:end,:], M,N)
-#     tempmeans2[n] = tempdata[18, 83]
-#     prmeans2[n] = prdata[18, 83]
-#     vardata = sum([co[:,:,n][i,j].*basis[:,i].*basis[:,j] for i in 1:d, j in 1:d])
-#     tempvardata = shape_data(vardata[1:M*N], M, N)
-#     prvardata = shape_data(vardata[M*N+1:end], M, N)
-#     tempstds2[n] = tempvardata[18, 83]
-#     prstds2[n] = prvardata[18, 83]
-# end
-
-# diffs = zeros(length(ens_gmt))
-# for (i, t) in enumerate(ens_gmt)
-#     means = zeros(12)
-#     for n in 1:12
-#         data = back_to_data(mean_coefs[n,:,2].*t .+ mean_coefs[n, :, 1], basis)
-#         tempdata = shape_data(data[1:M*N,:], M, N)
-#         prdata = shape_data(data[M*N+1:end,:], M, N)
-#         means[n] = prdata[18, 83]
-#     end
-#     diffs[i] = maximum(means) - minimum(means)
-# end
 
 tempmeans = zeros(12, length(ens_gmt))
 prmeans = zeros(12, length(ens_gmt))
@@ -200,26 +120,3 @@ begin
     save("figs/fairbanks_precip.png", fig)
     fig
 end
-
-
-# ## let's figure out where Boston is
-# file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
-# file3 = file_head*"ssp585/tas/r1i1p1f1_ssp585_tas.nc"
-# ts3 = ncData(file3, "tas")
-# lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
-# # lonvec2 = lonvec .-180. 
-
-# findfirst(x->x==41.96822026907538, latvec)
-# findfirst(x->x==108.75, lonvec)
-# # 71, 59
-
-# #now chicago:
-# #same lat: 71
-# ts3(92,94,41,42).lonvec
-# findfirst(x->x==91.875, lonvec) #50
-
-# #fairbanks
-# ts3(31,33,64,66).latvec
-# ts3(31,33,64,66).lonvec
-# findfirst(x->x==64.35073040887207, latvec) # 83
-# findfirst(x->x==31.875, lonvec) # 18

@@ -23,7 +23,6 @@ elseif use_metrics && !using_two
 end # this is not an exhaustive list of possible combinations, of course... 
 isdir(pwd() * "/figs/$parent_folder") ? nothing : mkdir(pwd() * "/figs/$parent_folder")
 
-
 # get sample lat/lon vectors
 file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
 file3 = file_head*"ssp585/tas/r1i1p1f1_ssp585_tas.nc"
@@ -45,11 +44,30 @@ deleteat!(ensemble_members, findall(x->x==8,ensemble_members)) #issue in histori
 deleteat!(ensemble_members, findall(x->x==3,ensemble_members)) #issue in ssp245 hurs data
 num_ens_members = length(ensemble_members)
 
+##
+var_labels = Dict("tas" => "temperature", "huss" => "specific humidity", "hurs" => "relative humidity", "pr" => "precipitation")
+scenario_colors = Dict("historical" => :red4, "ssp585" => :red, "ssp245" => :magenta3, "ssp119" => :indigo)
+
+
+######## begin plotting
+include("visualize/figs_data.jl")
 
 ##
 include("visualize/select_sample_locations.jl")
 
 ##
-# for variable in ["tas", second_var]
-#     include("visualize/figs_samples.jl")
-# end
+include("visualize/figs_samples.jl")
+for variable in ["tas", second_var]
+    visualize_samples(variable)
+end
+
+##
+include("visualize/figs_rmse.jl")
+for variable in ["tas", second_var]
+    generate_rmse_fig(variable)
+end
+
+#= implement two potential other plots
+adapting from sample locations ==> parallel plots but for a different scenario (validate power of PDFs more)
++ explore_seasonality ==> sample changes in max difference (show advantage of looking at months)
++ explore_trajectories ==> sample trajectory variablity (show for transition section)=#

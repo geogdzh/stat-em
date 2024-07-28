@@ -1,46 +1,4 @@
-using CairoMakie, ProgressBars, HDF5, GeoMakie
-include("../utils/data_util.jl")
-include("../utils/eof_util.jl")
-include("../utils/emulator_util.jl") 
-
 # fig 1: different scenarios
-
-scenarios = ["historical", "ssp585", "ssp245", "ssp119"]
-scenario_colors = Dict("historical" => :red4, "ssp585" => :red, "ssp245" => :magenta3, "ssp119" => :indigo)
-M, N = 192, 96
-L1, L2 = 1980, 1032 #for CMIP6
-
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = false  
-use_metrics = true
-if using_two
-    if second_var == "pr"
-        parent_folder = "temp_precip"
-    else
-        parent_folder = "temp_huss"
-    end
-else
-    parent_folder = "temp"
-end
-if non_dim
-    parent_folder = "nondim"
-end
-if use_metrics && using_two
-    parent_folder = "metrics"
-elseif use_metrics && !using_two
-    parent_folder = "temp_metrics"
-end
-
-
-#get sample timevecs
-file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
-file3 = file_head*"ssp585/tas/r1i1p1f1_ssp585_tas.nc"
-ts3 = ncData(file3, "tas")
-lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
-lonvec2 = lonvec .-180.
-time_history = [x for x in 1850:2014]
-time_future = [x for x in 2015:2100]
 
 begin
     fig = Figure(resolution=(800, 500))
@@ -58,7 +16,7 @@ begin
     end
     axislegend(ax, position=:lt)
     display(fig)
-    # save("figs/$parent_folder/gmt_scenarios.png", fig)
+    save("figs/$parent_folder/gmt_scenarios.png", fig)
 end
 
 # fig 2: show the basis
@@ -90,8 +48,6 @@ end
 
 begin
     fig = Figure(resolution=(1500, 1000)) 
-#question here : should it be using uniform coloring? or each their own 
-# + should we show yearly averages for the modes? or for one month?
     for (n, i) in enumerate([x for x in 1:3]) #i in 1:3
         ax = GeoAxis(fig[1,n], title="Mode $i", ylabel=(i==1 ? "Temperature" : ""))
         tmp = reshape(basis[1:M*N,i], (M, N))
@@ -122,6 +78,6 @@ begin
         tmp = reshape(basis[M*N+1:end,i], (M, N))
         heatmap!(ax2, lonvec2, latvec, tmp, colormap=:plum)
     end
-    # save("figs/$parent_folder/basis_modes.png", fig)
+    save("figs/$parent_folder/basis_modes.png", fig)
     display(fig)
 end
