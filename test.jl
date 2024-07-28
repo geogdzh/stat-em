@@ -1,7 +1,7 @@
 using CairoMakie, ProgressBars, HDF5, GeoMakie
-include("../utils/data_util.jl")
-include("../utils/eof_util.jl")
-include("../utils/emulator_util.jl") 
+include("utils/data_util.jl")
+include("utils/eof_util.jl")
+include("utils/emulator_util.jl") 
 
 parent_folder = "huss_only"
 

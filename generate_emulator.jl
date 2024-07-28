@@ -3,11 +3,12 @@ include("./utils/data_util.jl")
 include("./utils/eof_util.jl")
 include("./utils/emulator_util.jl")
 
+
 #specify flags to use
 using_two = true 
-second_var = "huss" # "pr", "huss", "hurs (first variable is always tas)
+second_var = "hurs" # "pr", "huss", "hurs (first variable is always tas)
 non_dim = false  
-use_metrics = true
+use_metrics = false
 if using_two
     parent_folder = "temp_$second_var"
 else
@@ -21,13 +22,13 @@ if use_metrics && using_two
 elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end # this is not an exhaustive list of possible combinations, of course... 
+isdir(pwd() * "/data/process") ? nothing : mkdir(pwd() * "/data/process")
 isdir(pwd() * "/data/$parent_folder") ? nothing : mkdir(pwd() * "/data/$parent_folder")
-isdir(pwd() * "/figs/$parent_folder") ? nothing : mkdir(pwd() * "/figs/$parent_folder")
 
 # specify parameters of data 
 file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
 scenarios = ["historical", "ssp585", "ssp245", "ssp119"]
-ensemble_members = [x for x in 1:30]
+ensemble_members = [x for x in 1:30] #yeah this needs to carry through somehow
 deleteat!(ensemble_members, findall(x->x==8,ensemble_members)) #issue in historical tas data
 deleteat!(ensemble_members, findall(x->x==3,ensemble_members)) #issue in ssp245 hurs data
 num_ens_members = length(ensemble_members)
@@ -43,30 +44,54 @@ ts3 = ncData(file3, "tas")
 lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
 lonvec2 = lonvec .-180.
 
+println("getting basis")
+flush(stdout)
 #generate basis
-include("generate/get_basis.jl")
-
-#generate two emulators
-for d in [10, 100]   #currently later analysis scripts are hardcoded for just these values of d
-    #generate projected timeseries + combine it into training data
-    include("generate/get_projts_history.jl")
-    include("generate/get_training_data.jl")
-
-    #train emulator
-    include("generate/get_emulator.jl")
-
+if !isfile("data/$parent_folder/basis_2000d.hdf5")
+    include("generate/get_basis.jl")
 end
 
+#generate two emulators
+include("generate/get_projts_history.jl")
+include("generate/get_training_data.jl")
+include("generate/get_emulator.jl")
+
+for d in [10, 100] 
+    #generate projected timeseries + combine it into training data
+    println("working on proj history for emulator with $d modes")
+    flush(stdout)
+    get_projts_history(d)
+    get_training_data(d)
+    
+    println("training emulator with $d modes")
+    flush(stdout)
+    #train emulator
+    get_emulator(d)
+end
+
+
 #test the emulators
+include("generate/get_ens_var.jl")
 for param in ["d", "k"]
     if param == "d"
         for d in [10, 100]
-            include("generate/get_ens_var.jl")
+            println("calculating ens var for emulator with $d modes")
+            flush(stdout)
+            run_ens_vars(param, d)
         end
     elseif param == "k"
         d = 100
-        include("generate/get_ens_var.jl")
+        run_ens_vars(param, d)
     end
 end
-include("generate/get_rmse.jl")
 
+println("calculating RMSE")
+flush(stdout)
+include("generate/get_rmse.jl")
+for variable in ["tas", "huss"]
+    numbers = [10, 100]
+    calculate_rmse(numbers, variable, scenarios; for_k=false)
+    
+    ks = [x for x in 1:2]
+    calculate_rmse(ks, variable, scenarios; for_k=true)
+end

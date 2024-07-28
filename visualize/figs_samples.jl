@@ -1,118 +1,33 @@
-using CairoMakie, ProgressBars, HDF5, GeoMakie
-include("../utils/data_util.jl")
-include("../utils/eof_util.jl")
-include("../utils/emulator_util.jl") 
 
-file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
-file3 = file_head*"ssp585/tas/r1i1p1f1_ssp585_tas.nc"
-ts3 = ncData(file3, "tas")
-lonvec, latvec = ts3.lonvec[:], ts3.latvec[:]
-lonvec2 = lonvec .-180.
-
-scenarios = ["historical", "ssp585", "ssp245", "ssp119"]
-time_history = [x for x in 1850:2014]
-time_future = [x for x in 2015:2100]
-L1, L2 = 1980, 1032 
-l1, l2 = 165, 86
-
-filepr = file_head*"ssp585/pr/r1i1p1f1_ssp585_pr.nc"
-pr = ncData(filepr, "pr")
-# prslice = pr(208, 210, 62, 65)
-prslice = pr(285, 289 , 40, 44)
-prdata = prslice.data .* 86400 #convert to mm/day
-
-filehuss = file_head*"ssp585/huss/r1i1p1f1_ssp585_huss.nc"
-huss = ncData(filehuss, "huss")
-
-### let's identify the locations
-function get_indices(lon1, lon2, lat1, lat2, ts)
-    lons = ts(lon1, lon2, lat1, lat2).lonvec
-    lats = ts(lon1, lon2, lat1, lat2).latvec
-    return [findfirst(x -> x == lons[1], ts.lonvec), 
-    findfirst(x -> x == lons[end], ts.lonvec), 
-    findfirst(x -> x == lats[1], ts.latvec), 
-    findfirst(x -> x == lats[end], ts.latvec)]
-end
-
-sampling_indices = zeros(Int64, (6, 4))
-sampling_indices[1,:] = get_indices(272,273,41,42, ts3) #chicago
-sampling_indices[2,:] = get_indices(300,301,-4,-3, ts3) #manaus, brazil
-sampling_indices[3,:] = get_indices(7,9,11,12, ts3) #nigeria
-sampling_indices[4,:] = get_indices(26,28,68,70, ts3) #finland
-sampling_indices[5,:] = get_indices(90,92,23,25, ts3) #dhaka, bhangladesh
-sampling_indices[6,:] = get_indices(174, 176, -38, -36, ts3) #auckland, nz
-
-sampling_labels = ["Chicago, USA", "Manaus, Brazil", "Kano, Nigeria", "Inari, Finland", "Dhaka, Bhangladesh", "Auckland, NZ"]
-
-#### start with: real data PDFs for precip and temp
-# num_ens_members = 50
-# for variable in ["tas"]
-#     # points = zeros(6, num_ens_members, L2)
-#     points = zeros(6, num_ens_members, 120)
-#     for n in 1:num_ens_members
-#         file = file_head*"ssp585/$(variable)/r$(n)i1p1f1_ssp585_$(variable).nc"
-#         ts = ncData(file, variable)
-#         data = variable == "pr" ? log.(ts.data .* 86400) : ts.data .* 1.0
-#         for ind in 1:6
-#             subset = data[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], end-119:end]
-#             avg = mean(subset, dims=(1,2))[:]
-#             points[ind, n, :] = avg
-#         end
-#     end
-#     hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_50ens.hdf5", "w")
-#     write(hfile, "end_points", points)
-#     # write(hfile, "points", points)
-#     write(hfile, "indices", sampling_indices)
-#     write(hfile, "labels", sampling_labels)
-#     close(hfile)
-# end
 
 #####
+label = variable == "tas" ? variable : "two"
 
-num_ens_members = 50
-variable = "huss"
+# get the ground truth
+hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "r")
+sampling_indices = read(hfile, "sampling_indices")
+sampling_labels = read(hfile, "sampling_labels")
+end_points = read(hfile, "end_points")
+sample_means = read(hfile, "sample_means")
+sample_vars = read(hfile, "sample_vars")
+close(hfile)
 
-#model normal approximation
-begin
-    hfile = h5open("data/ground_truth/vars_$(variable)_ssp585_50ens.hdf5", "r") # true CMIP vars incl means
-    true_var = read(hfile, "true_var")
-    true_ens_mean = read(hfile, "true_ens_mean")
-    close(hfile)
-    sample_means = zeros(6, l2)
-    sample_vars = zeros(6, l2)
-    for ind in 1:6
-        slice = true_ens_mean[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-        sample_means[ind, :] = mean(slice, dims=(1,2))[:]
-        slice = true_var[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-        sample_vars[ind, :] = mean(slice, dims=(1,2))[:] 
-    end
-end
-
-## emulator approximation
+## get emulator approximation
 hfile = h5open("data/$parent_folder/ens_vars/ens_vars_ssp585_100d.hdf5", "r")
-ens_means_tas = read(hfile, "ens_means_tas_100")
-ens_vars_tas = read(hfile, "ens_vars_tas_100")
-ens_means_two = read(hfile, "ens_means_pr_100")
-ens_vars_two = read(hfile, "ens_vars_pr_100")
+ens_means = read(hfile, "ens_means_$(label)_100")
+ens_vars = read(hfile, "ens_vars_$(label)_100")
 close(hfile)
 
 sample_ens_means = zeros(6, l2)
 sample_ens_vars = zeros(6, l2)
 for ind in 1:6
-    slice = ens_means_two[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-    sample_ens_means[ind, :] = mean(slice, dims=(1,2))[:] #./ pr_factor
-    slice = ens_vars_two[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
-    sample_ens_vars[ind, :] = mean(slice, dims=(1,2))[:]  #./ pr_factor^2
+    slice = ens_means[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
+    sample_ens_means[ind, :] = mean(slice, dims=(1,2))[:] 
+    slice = ens_vars[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan
+    sample_ens_vars[ind, :] = mean(slice, dims=(1,2))[:]  
 end
 
-variable = "tas"
-
-
-hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_50ens.hdf5", "r")
-# points = read(hfile, "points")
-end_points = read(hfile, "end_points")
-close(hfile)
-
+##
 begin
     data = end_points[:,:,1:12:end]# looking only at January!
     fig = Figure(resolution=(1000,750)) #title="Specific Humidity in January 2095-2100"
@@ -123,18 +38,17 @@ begin
             samples = reshape(data[ind,:,:], (num_ens_members*Int(size(end_points)[3]/12),))
             hist!(ax, samples, bins=15,  normalization=:pdf)
 # 
-            # add the distribution
+            # add the distributions
             params = [(sample_means[ind, x], sqrt(sample_vars[ind, x])) for x in 76:86]
             dist = MixtureModel(Normal, params)
             plot!(ax, dist, label="True distribution", color=:red)
 
-            params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
-            dist2 = MixtureModel(Normal, params2)
-            plot!(ax, dist2, label="Emulator distribution", color=:blue)
-
+            # params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
+            # dist2 = MixtureModel(Normal, params2)
+            # plot!(ax, dist2, label="Emulator distribution", color=:blue)
         end
     end
-    save("figs/$parent_folder/$(variable)_samples.png", fig)
+    # save("figs/$parent_folder/$(variable)_samples.png", fig)
     display(fig)
 end
 

@@ -56,56 +56,58 @@ function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
     return using_two ? (ens_vars_tas, ens_vars_two) : ens_vars_tas
 end
 
-if param == "d"
-    # test the differnt values of n
-    for scenario in scenarios[2:end] 
-        println("working on $(scenario)")
-        flush(stdout)
-        #get the true gmt
-        hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
-        ens_gmt = read(hfile, "ens_gmt")
-        true_ens_gmt = mean(ens_gmt, dims=1)[:]
-        close(hfile)
 
-        
-        println("working on $(d)")
-        flush(stdout)
-        if using_two
-            ens_vars_tas, ens_vars_two = get_ens_vars(d, true_ens_gmt)
-            ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true)
-            hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
-            write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
-            write(hfile, "ens_vars_two_$(d)", ens_vars_two)
-            write(hfile, "ens_means_tas_$(d)", ens_means_tas)
-            write(hfile, "ens_means_two_$(d)", ens_means_two)
+function run_ens_vars(param, d)
+    if param == "d"
+        # test the differnt values of n
+        for scenario in scenarios[2:end] 
+            println("working on $(scenario)")
+            flush(stdout)
+            #get the true gmt
+            hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
+            ens_gmt = read(hfile, "ens_gmt")
+            true_ens_gmt = mean(ens_gmt, dims=1)[:]
             close(hfile)
-        else
-            ens_vars_tas = get_ens_vars(d, true_ens_gmt)
-            ens_means_tas = get_ens_vars(d, true_ens_gmt; get_means=true)
-            hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
-            write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
-            write(hfile, "ens_means_tas_$(d)", ens_means_tas)
+
+            println("working on $(d)")
+            flush(stdout)
+            if using_two
+                ens_vars_tas, ens_vars_two = get_ens_vars(d, true_ens_gmt)
+                ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true)
+                hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
+                write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
+                write(hfile, "ens_vars_two_$(d)", ens_vars_two)
+                write(hfile, "ens_means_tas_$(d)", ens_means_tas)
+                write(hfile, "ens_means_two_$(d)", ens_means_two)
+                close(hfile)
+            else
+                ens_vars_tas = get_ens_vars(d, true_ens_gmt)
+                ens_means_tas = get_ens_vars(d, true_ens_gmt; get_means=true)
+                hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
+                write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
+                write(hfile, "ens_means_tas_$(d)", ens_means_tas)
+                close(hfile)
+            end
+        end
+
+    elseif param == "k"
+        # # test the differnt values of k
+        for scenario in scenarios[2:end] 
+            println("working on $(scenario)")
+            flush(stdout)
+            hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
+            ens_gmt = read(hfile, "ens_gmt")
+            true_ens_gmt = mean(ens_gmt, dims=1)[:]
+            close(hfile)
+
+            hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_k.hdf5", "w")
+            for k in 1:2
+                ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true, k=k)
+                write(hfile, "ens_means_tas_k$(k)", ens_means_tas)
+                write(hfile, "ens_means_two_k$(k)", ens_means_two)
+            end
+            write(hfile, "d", d)
             close(hfile)
         end
-    end
-
-elseif param == "k"
-    # # test the differnt values of k
-    for scenario in scenarios[2:end] 
-        println("working on $(scenario)")
-        flush(stdout)
-        hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
-        ens_gmt = read(hfile, "ens_gmt")
-        true_ens_gmt = mean(ens_gmt, dims=1)[:]
-        close(hfile)
-
-        hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_k.hdf5", "w")
-        for k in 1:2
-            ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true, k=k)
-            write(hfile, "ens_means_tas_k$(k)", ens_means_tas)
-            write(hfile, "ens_means_two_k$(k)", ens_means_two)
-        end
-        write(hfile, "d", d)
-        close(hfile)
     end
 end

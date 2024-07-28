@@ -1,19 +1,14 @@
 for scenario in scenarios
+    println("getting gmts for scenario $(scenario)")
+    flush(stdout)
     ens_gmt = scenario == "historical" ? zeros((num_ens_members, Int((L1)/12))) : zeros((num_ens_members, Int((L2)/12))) #GMT in any case
 
-    errors = []
-    for i in 1:num_ens_members
-        try
-            println("working on ensemble member $(i)")
-            flush(stdout)
-            files = file_head*"$(scenario)/tas/r$(i)i1p1f1_$(scenario)_tas.nc"
-            tmps = ncData(files, "tas")
-            ens_gmt[i, :] = get_gmt_list(tmps) 
-        catch
-            println("missing values in ensemble member $(i)")
-            push!(errors, i)
-            flush(stdout)
-        end
+    for (i, n) in enumerate(ensemble_members)
+        println("working on ensemble member $(n)")
+        flush(stdout)
+        files = file_head*"$(scenario)/tas/r$(n)i1p1f1_$(scenario)_tas.nc"
+        tmps = ncData(files, "tas")
+        ens_gmt[i, :] = get_gmt_list(tmps) 
     end
 
     hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "w")

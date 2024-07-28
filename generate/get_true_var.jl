@@ -1,4 +1,4 @@
-variables = ["tas", second_var]
+variables = ["tas", second_var]  #could also call this from the outer script
 
 for variable in variables
     println("working on $(variable)")
@@ -10,11 +10,10 @@ for variable in variables
 
         all_gmts = zeros((num_ens_members, Int(L/12))) 
         all_data = zeros((M,N, L, num_ens_members))
-        for i in 1:num_ens_members
-            println("working on ensemble member $(i)")
+        for (i, n) in enumerate(ensemble_members)
+            println("working on ensemble member $(n)")
             flush(stdout)
-            file_head = "/net/fs06/d3/mgeo/CMIP6/interim/"
-            file = file_head*"$(scenario)/$(variable)/r$(i)i1p1f1_$(scenario)_$(variable).nc"
+            file = file_head*"$(scenario)/$(variable)/r$(n)i1p1f1_$(scenario)_$(variable).nc"
             ts = ncData(file, variable) 
             all_gmts[i,:] = get_gmt_list(ts)
             all_data[:,:,:,i] = apply_transform(ts.data[:,:,:], variable)

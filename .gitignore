@@ -26,6 +26,7 @@ Manifest.toml
 
 #
 data/*
+data2/*
 figs/*
 *.sh
 *.out
