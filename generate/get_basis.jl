@@ -33,7 +33,7 @@ if using_two
     Xp2 = reshape_data(use_metrics ? sqrt.(metric) .* two2.data : two2.data)
 
     fullXp = hcat(Xp, Xp2)
-    fullXp = apply_transform(fullXp, second_var)
+    fullXp = apply_transform(fullXp, second_var; hurs_option=hurs_option)
 end
 
 if non_dim

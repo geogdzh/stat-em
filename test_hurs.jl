@@ -46,3 +46,51 @@ end
 
 ###
 
+variable = "hurs"
+
+label = variable == "tas" ? variable : "two"
+
+# get the ground truth
+hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "r")
+sampling_indices = read(hfile, "sampling_indices")
+sampling_labels = read(hfile, "sampling_labels")
+end_points = read(hfile, "end_points")
+sample_means = read(hfile, "sample_means")
+sample_vars = read(hfile, "sample_vars")
+close(hfile)
+
+
+#### start with: real data PDFs for last ten years of SSP585
+end_points = zeros(6, num_ens_members, 120)
+for n in 1:num_ens_members
+    file = file_head*"ssp585/$(variable)/r$(n)i1p1f1_ssp585_$(variable).nc"
+    ts = ncData(file, variable)
+    data = apply_transform(ts.data, variable; hurs_option=hurs_option)
+    for ind in 1:6
+        subset = data[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], end-119:end]
+        avg = mean(subset, dims=(1,2))[:]
+        end_points[ind, n, :] = avg
+    end
+end
+# wfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "w")
+# write(wfile, "end_points", end_points)
+# write(wfile, "sampling_indices", sampling_indices)
+# write(wfile, "sampling_labels", sampling_labels)
+
+# normal approximation to ground truth
+hfile = h5open("data/ground_truth/vars_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "r") # true CMIP vars incl means
+true_var = read(hfile, "true_var")
+true_ens_mean = read(hfile, "true_ens_mean")
+close(hfile)
+sample_means = zeros(6, l2)
+sample_vars = zeros(6, l2)
+for ind in 1:6
+    slice = true_ens_mean[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan!!
+    sample_means[ind, :] = mean(slice, dims=(1,2))[:]
+    slice = true_var[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], 1:12:end] #only jan!!
+    sample_vars[ind, :] = mean(slice, dims=(1,2))[:] 
+end
+# write(wfile, "sample_means", sample_means)
+# write(wfile, "sample_vars", sample_vars)
+# close(wfile)
+

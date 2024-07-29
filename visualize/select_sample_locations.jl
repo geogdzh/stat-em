@@ -24,7 +24,7 @@ for variable in ["tas", second_var]
     for n in 1:num_ens_members
         file = file_head*"ssp585/$(variable)/r$(n)i1p1f1_ssp585_$(variable).nc"
         ts = ncData(file, variable)
-        data = apply_transform(ts.data, variable)
+        data = apply_transform(ts.data, variable; hurs_option=hurs_option)
         for ind in 1:6
             subset = data[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], end-119:end]
             avg = mean(subset, dims=(1,2))[:]

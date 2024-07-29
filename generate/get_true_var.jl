@@ -16,7 +16,7 @@ for variable in variables
             file = file_head*"$(scenario)/$(variable)/r$(n)i1p1f1_$(scenario)_$(variable).nc"
             ts = ncData(file, variable) 
             all_gmts[i,:] = get_gmt_list(ts)
-            all_data[:,:,:,i] = apply_transform(ts.data[:,:,:], variable)
+            all_data[:,:,:,i] = apply_transform(ts.data[:,:,:], variable; hurs_option=hurs_option)
         end
 
         true_var = var(all_data, dims=4)[:,:,:,1]

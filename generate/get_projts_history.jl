@@ -40,7 +40,7 @@ function get_projts_history(d::Int)
                 data1 = non_dim ? reshape_data(data1) ./ temp_factor : reshape_data(data1)
 
                 twos = ncData(files_two, second_var)
-                twodata = apply_transform(twos.data, second_var)
+                twodata = apply_transform(twos.data, second_var; hurs_option=hurs_option)
                 data2 = use_metrics ? sqrt.(metric) .* twodata : twodata
                 data2 = non_dim ? reshape_data(data2) ./ two_factor : reshape_data(data2)
                 data = vcat(data1, data2)
