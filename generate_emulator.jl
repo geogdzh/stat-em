@@ -58,19 +58,20 @@ include("generate/get_emulator.jl")
 
 for d in [10, 100] 
     #generate projected timeseries + combine it into training data
-    println("working on proj history for emulator with $d modes")
+    println("working on proj history for emulator with $d modes") 
     flush(stdout)
-    get_projts_history(d)
-    get_training_data(d)
+    get_projts_history(d) # has built in check for historical and ssp585 already exsting - generalize!
+    get_training_data(d) #built in check for trainging file
     
     println("training emulator with $d modes")
     flush(stdout)
     #train emulator
-    get_emulator(d)
+    get_emulator(d) #built in checks for emulator already existing
 end
 
 
 #test the emulators
+isdir(pwd() * "/data/$parent_folder/ens_vars") ? nothing : mkdir(pwd() * "/data/$parent_folder/ens_vars")
 include("generate/get_ens_var.jl")
 for param in ["d", "k"]
     if param == "d"
@@ -88,7 +89,7 @@ end
 println("calculating RMSE")
 flush(stdout)
 include("generate/get_rmse.jl")
-for variable in ["tas", "huss"]
+for variable in ["hurs"]
     numbers = [10, 100]
     calculate_rmse(numbers, variable, scenarios; for_k=false)
     

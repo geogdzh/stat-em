@@ -1,37 +1,4 @@
-using CairoMakie, ProgressBars, HDF5
-include("../utils/data_util.jl")
-include("../utils/eof_util.jl")
-include("../utils/emulator_util.jl")
-
-scenarios = ["historical", "ssp585", "ssp245", "ssp119"]
-scenario_colors = Dict("historical" => :red4, "ssp585" => :red, "ssp245" => :magenta3, "ssp119" => :indigo)
-time_history = [x for x in 1850:2014]
-time_future = [x for x in 2015:2100]
-L1, L2 = 1980, 1032 #for CMIP6
-l1, l2 = 165, 86
-
-d=10
-using_two = true 
-second_var = "huss" # "pr" or "huss"
-non_dim = true  
-use_metrics = false
-if using_two
-    if second_var == "pr"
-        parent_folder = "temp_precip"
-    else
-        parent_folder = "temp_huss"
-    end
-else
-    parent_folder = "temp"
-end
-if non_dim
-    parent_folder = "nondim"
-end
-if use_metrics && using_two
-    parent_folder = "metrics"
-elseif use_metrics && !using_two
-    parent_folder = "temp_metrics"
-end
+d = 10
 
 ## load the emulator
 hfile = h5open("data/$(parent_folder)/gaussian_emulator_ssp585_$(d)d.hdf5", "r")
@@ -39,36 +6,32 @@ mean_coefs_1 = read(hfile, "mean_coefs_1")
 mean_coefs_2 = read(hfile, "mean_coefs_2")
 chol_coefs = read(hfile, "chol_coefs")
 basis = read(hfile, "basis")
-num_ens_members = read(hfile, "num_ens_members")
 ens_gmt = read(hfile, "ens_gmt")
 close(hfile)
 
-hfile = h5open("data/$(parent_folder)/training_data_ssp585_$(d)d_49ens.hdf5", "r")
+hfile = h5open("data/$(parent_folder)/training_data_ssp585_$(d)d_$(num_ens_members)ens.hdf5", "r")
 ens_projts = read(hfile, "projts")[1:d, :, :]
-# ens_gmt = read(hfile, "ens_gmt")
-# num_ens_members = read(hfile, "num_ens_members")
 close(hfile)
 
-hfile = h5open("data/ssp119_gmts_50ens.hdf5", "r")
+hfile = h5open("data/ssp119_gmts_$(num_ens_members)ens.hdf5", "r")
 ens_gmt_119 = read(hfile, "ens_gmt")
 close(hfile)
 ens_gmt_119 = mean(ens_gmt_119, dims=1) # the MAXIMUM (turning point) is at index 34
 
-hfile = h5open("data/$(parent_folder)/projts_ssp119_$(d)d_50ens.hdf5", "r")
+hfile = h5open("data/$(parent_folder)/projts_ssp119_$(d)d_$(num_ens_members)ens.hdf5", "r")
 ens_projts_119 = read(hfile, "projts")
 close(hfile)
 
 mean_coefs_119_1 = get_mean_coefs(ens_projts_119, ens_gmt_119, degree=1)
-# mean_coefs_119_2 = get_mean_coefs(ens_projts_119, ens_gmt_119, degree=2)
 
 #####
 #averaging
-year_ens_projts_119 = zeros((d, Int(L2/12), num_ens_members))
-for i in 1:num_ens_members
-    for mode in 1:d
-        year_ens_projts_119[mode,:,i] = month_to_year_avg(ens_projts_119[mode,:,i])
-    end
-end
+# year_ens_projts_119 = zeros((d, Int(L2/12), num_ens_members))
+# for i in 1:num_ens_members
+#     for mode in 1:d
+#         year_ens_projts_119[mode,:,i] = month_to_year_avg(ens_projts_119[mode,:,i])
+#     end
+# end
 
 
 begin
@@ -77,17 +40,16 @@ begin
         row_index = (mode - 1) ÷ 5 + 1
         col_index = (mode - 1) % 5 + 1
         ax = Axis(fig[row_index, col_index], title="Mode $mode")
-        # for i in 1:50
-            # scatter!(ax, ens_gmt_119[1:34], month_to_year_avg(ens_projts_119[mode,:,i])[1:34], color=:red, label="before")
-            # scatter!(ax, ens_gmt_119[35:end], month_to_year_avg(ens_projts_119[mode,:,i])[35:end], color=:blue, label="after")
-        # end
-        hist!(ax, vec(year_ens_projts_119[mode,1:34,:]), bins=20, color=(:red, 0.5), label="before", normalization=:pdf)
-        hist!(ax, vec(year_ens_projts_119[mode,35:end,:]), bins=20, color=(:blue, 0.5), label="after", normalization=:pdf)
+        # hist!(ax, vec(year_ens_projts_119[mode,1:34,:]), bins=20, color=(:red, 0.5), label="before", normalization=:pdf)
+        # hist!(ax, vec(year_ens_projts_119[mode,35:end,:]), bins=20, color=(:blue, 0.5), label="after", normalization=:pdf)
+
+        hist!(ax, vec(ens_projts_119[mode,1:12:34*12+1,:]), bins=20, color=(:red, 0.5), label="before", normalization=:pdf)
+        hist!(ax, vec(ens_projts_119[mode,35*12+1:12:end,:]), bins=20, color=(:blue, 0.5), label="after", normalization=:pdf)
         if mode == 5
-            axislegend(ax, position=:rt)
+            axislegend(ax, position=:lt)
         end
     end
-    # save("figs/$parent_folder/before_after_hist.png", fig)
+    save("figs/$parent_folder/before_after_hist.png", fig)
     
     display(fig)
 end
@@ -130,8 +92,6 @@ begin
 end 
 
 #var fits
-#needs: vars, num_ens_members, var_coefs :: after an emulator has been trained
-
 var_coefs, vars = get_var_coefs(ens_projts, ens_gmt, mean_coefs_1; return_vars=true)
 var_coefs_119, vars_119 = get_var_coefs(ens_projts_119, ens_gmt_119, mean_coefs_119_1; return_vars=true)
 
@@ -163,6 +123,6 @@ begin
             axislegend(ax, elems, labels, position=:rt)
         end
     end
-    # save("figs/$parent_folder/jan_var_fits_10_modes_ssp_comparison.png", fig)
+    save("figs/$parent_folder/jan_var_fits_10_modes_ssp_comparison.png", fig)
     display(fig)
 end 

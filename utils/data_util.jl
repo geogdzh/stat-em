@@ -1,12 +1,16 @@
 using Dates, NCDatasets
 
-function apply_transform(data, variable)
+function apply_transform(data, variable; hurs_option="log")
     if variable == "pr"
         return log.(data .* 86400) # use log of precip to normalize and convert to mm/day
     elseif variable == "huss"
         return log.(data)
     elseif variable == "hurs"
-        return log.(data)
+        if hurs_option == "log"
+            return log.(data)
+        else
+            return data
+        end
     else
         return data
     end

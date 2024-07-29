@@ -1,4 +1,10 @@
 function get_projts_history(d::Int)
+    if isfile("data/$(parent_folder)/projts_historical_$(d)d_$(num_ens_members)ens.hdf5") && isfile("data/$(parent_folder)/projts_ssp585_$(d)d_$(num_ens_members)ens.hdf5")
+        println("projts already exists!")
+        flush(stdout)
+        return nothing
+    end
+
     ############## load a basis
     hfile = h5open("data/$(parent_folder)/basis_2000d.hdf5", "r") #this basis is calculated from just one ens member
     basis = read(hfile, "basis")

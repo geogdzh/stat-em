@@ -5,7 +5,7 @@ function calculate_rmse(numbers, variable, scenarios; for_k=false)
     for scenario in scenarios[2:end]
         # once we have the emulator and have saved out the emulator ensemble vars/means etc; calculate the rmse compared to various scenarios
 
-        hfile = h5open("data/ground_truth/vars_$(variable)_$(scenario)_50ens.hdf5", "r") # true CMIP vars
+        hfile = h5open("data/ground_truth/vars_$(variable)_$(scenario)_$(num_ens_members)ens.hdf5", "r") # true CMIP vars
         true_var = read(hfile, "true_var")
         true_ens_mean = read(hfile, "true_ens_mean")[:,:,:,1]
         close(hfile)

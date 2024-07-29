@@ -47,10 +47,13 @@ num_ens_members = length(ensemble_members)
 ##
 var_labels = Dict("tas" => "temperature", "huss" => "specific humidity", "hurs" => "relative humidity", "pr" => "precipitation")
 scenario_colors = Dict("historical" => :red4, "ssp585" => :red, "ssp245" => :magenta3, "ssp119" => :indigo)
+unit_labels = Dict("tas" => "K", "huss" => "kg/kg", "hurs" => "%", "pr" => "mm/day")
 
 
 ######## begin plotting
 include("visualize/figs_data.jl")
+
+include("visualize/figs_fits.jl")
 
 ##
 include("visualize/select_sample_locations.jl")
@@ -68,6 +71,6 @@ for variable in ["tas", second_var]
 end
 
 #= implement two potential other plots
-adapting from sample locations ==> parallel plots but for a different scenario (validate power of PDFs more)
-+ explore_seasonality ==> sample changes in max difference (show advantage of looking at months)
-+ explore_trajectories ==> sample trajectory variablity (show for transition section)=#
+adapting from sample locations ==> parallel plots but for a different scenario (validate power of PDFs more) ## and this also feels natural
++ explore_seasonality ==> sample changes in max difference (show advantage of looking at months) ## maybe not this, maybe in an appendix
++ explore_trajectories ==> sample trajectory variablity (show for transition section)=# ## I mean this is definitely necessry

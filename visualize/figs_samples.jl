@@ -34,21 +34,25 @@ function visualize_samples(variable)
         for i in 1:2
             for j in 1:3
                 ind = (i-1)*3+j
-                ax = Axis(fig[i,j], title=sampling_labels[ind]) #xlabel="Temperature (K)", ylabel="Frequency",
+                ax = Axis(fig[i,j], title=sampling_labels[ind], xlabel=(i == 2 ? "$(uppercasefirst(var_labels[variable])) ($(unit_labels[variable]))" : ""), ylabel=(j==1 ? "Frequency" : ""))
                 samples = reshape(data[ind,:,:], (num_ens_members*Int(size(end_points)[3]/12),))
-                hist!(ax, samples, bins=15,  normalization=:pdf)
+                hist!(ax, samples, bins=15,  normalization=:pdf, "MPI")
     # 
                 # add the distributions
                 params = [(sample_means[ind, x], sqrt(sample_vars[ind, x])) for x in 76:86]
                 dist = MixtureModel(Normal, params)
-                plot!(ax, dist, label="True distribution", color=:red)
+                plot!(ax, dist, label="MPI", color=:red)
 
                 params2 = [(sample_ens_means[ind, x], sqrt(sample_ens_vars[ind, x])) for x in 76:86]
-                # dist2 = MixtureModel(Normal, params2)
-                # plot!(ax, dist2, label="Emulator distribution", color=:blue)
+                dist2 = MixtureModel(Normal, params2)
+                plot!(ax, dist2, label="Emulator", color=:blue)
+
+                if j == 1 && i == 1
+                    axislegend(ax, position=:lt)
+                end
             end
         end
-        # save("figs/$parent_folder/$(variable)_samples.png", fig)
+        save("figs/$parent_folder/$(variable)_samples.png", fig)
         display(fig)
     end
 

@@ -1,4 +1,10 @@
 function get_training_data(d::Int)
+    if isfile("data/$(parent_folder)/training_data_ssp585_$(d)d_$(num_ens_members)ens.hdf5")
+        println("training data already exists!")
+        flush(stdout)
+        return nothing
+    end
+
     scenario = "ssp585"
 
     ##### assemble training data from projts history

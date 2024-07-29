@@ -49,7 +49,7 @@ function generate_rmse_fig(variable)
         plot_rmse(ax, variable, measure, ks; rel_error=rel_error, testing_k=true)
         
 
-        ax = GeoAxis(fig[2,1:5], title="d) RMSE of the ensemble $(measure) \n for $(long_label) on SSP119")
+        ax = GeoAxis(fig[2,1:5], title="d) RMSE of the ensemble $(measure) \n for $(long_label) on SSP119", xticklabelrotation=45.0)
         hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r")
         begin
             data =  read(hfile, "rmse_$(measure)s_$(label)_100") 
@@ -63,7 +63,7 @@ function generate_rmse_fig(variable)
         ax = Axis(fig[1,9:12], title="c) Average RMSE of the ensemble $(measure) \n for $(long_label) for varied # of modes", xlabel="Year")
         plot_rmse(ax, variable, measure, numbers; rel_error=rel_error)
         
-        ax = GeoAxis(fig[2,7:11], title="e) RMSE of the ensemble $(measure) \n for $(long_label) on SSP119")
+        ax = GeoAxis(fig[2,7:11], title="e) RMSE of the ensemble $(measure) \n for $(long_label) on SSP119", xticklabelrotation=45.0)
         hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r")
         begin
             data = read(hfile, "rmse_$(measure)s_$(label)_100") 

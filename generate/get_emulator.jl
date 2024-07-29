@@ -2,6 +2,12 @@ function get_emulator(d::Int)
     scenario = "ssp585"
     offload = false
 
+    if isfile("data/$(parent_folder)/gaussian_emulator_$(scenario)_$(d)d.hdf5")
+        println("emulator already exists!")
+        flush(stdout)
+        return nothing
+    end
+
     ######### load in basis
     hfile = h5open("data/$(parent_folder)/basis_2000d.hdf5", "r") #this basis is calculated from just one ens member
     basis = read(hfile, "basis")
