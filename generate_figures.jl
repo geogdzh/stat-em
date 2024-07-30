@@ -54,9 +54,9 @@ unit_labels = Dict("tas" => "K", "huss" => "kg/kg", "hurs" => "%", "pr" => "mm/d
 
 
 ######## begin plotting
-# include("visualize/figs_data.jl")
+include("visualize/figs_data.jl")
 
-# include("visualize/figs_fits.jl")
+include("visualize/figs_fits.jl")
 
 ##
 include("visualize/select_sample_locations.jl")
