@@ -74,6 +74,6 @@ function generate_rmse_fig(variable)
         end
         colsize!(fig.layout, 12, Relative(1/11))
         save("figs/$(parent_folder)/rmse_joint_$(variable).png", fig)
-        fig
+        display(fig)
     end 
 end

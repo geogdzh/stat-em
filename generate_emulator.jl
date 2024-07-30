@@ -90,7 +90,7 @@ end
 println("calculating RMSE")
 flush(stdout)
 include("generate/get_rmse.jl")
-for variable in ["hurs"]
+for variable in ["tas"] #CHANGE BACK
     numbers = [10, 100]
     calculate_rmse(numbers, variable, scenarios; for_k=false)
     

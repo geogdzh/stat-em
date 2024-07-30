@@ -59,13 +59,16 @@ end
 
 function run_ens_vars(param, d)
     if param == "d"
-        if isfile("data/$(parent_folder)/ens_vars/ens_vars_historical_$(d)d.hdf5") #generalize!
-            return nothing
-        end
         # test the differnt values of n
         for scenario in scenarios[2:end] 
             println("working on $(scenario)")
             flush(stdout)
+
+            if isfile("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5") 
+                println("ens vars for $scenario and $d already exists")
+                flush(stdout)
+                return nothing
+            end
             #get the true gmt
             hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
             ens_gmt = read(hfile, "ens_gmt")
@@ -94,13 +97,16 @@ function run_ens_vars(param, d)
         end
 
     elseif param == "k"
-        if isfile("data/$(parent_folder)/ens_vars/ens_vars_historical_k.hdf5") #generalize!
-            return nothing
-        end
         # # test the differnt values of k
         for scenario in scenarios[2:end] 
             println("working on $(scenario)")
             flush(stdout)
+            if isfile("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_k.hdf5") 
+                println("ens vars for and $scenario and k already exists")
+                flush(stdout)
+                return nothing
+            end
+
             hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
             ens_gmt = read(hfile, "ens_gmt")
             true_ens_gmt = mean(ens_gmt, dims=1)[:]

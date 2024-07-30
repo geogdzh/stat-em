@@ -33,7 +33,7 @@ close(hfile)
 for i in 1:10
     basis_trends_history[:,:,i,1] = projts[i,:,:]
 end
-for (j,scenario) in enumerate(scenarios[2:end]) #this except it doesn't really exist
+for (j,scenario) in enumerate(scenarios[2:end]) 
     hfile = h5open("data/$(parent_folder)/projts_$(scenario)_10d_$(num_ens_members)ens.hdf5", "r")
     projts = read(hfile, "projts")
     close(hfile)

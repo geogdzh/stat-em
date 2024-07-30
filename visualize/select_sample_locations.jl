@@ -20,6 +20,10 @@ sampling_labels = ["Chicago, USA", "Manaus, Brazil", "Kano, Nigeria", "Inari, Fi
 
 #### start with: real data PDFs for last ten years of SSP585
 for variable in ["tas", second_var]
+    if isfile("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5")
+        continue
+    end
+
     end_points = zeros(6, num_ens_members, 120)
     for n in 1:num_ens_members
         file = file_head*"ssp585/$(variable)/r$(n)i1p1f1_ssp585_$(variable).nc"
