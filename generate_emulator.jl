@@ -3,12 +3,13 @@ include("./utils/data_util.jl")
 include("./utils/eof_util.jl")
 include("./utils/emulator_util.jl")
 
-
 #specify flags to use
-using_two = true 
-second_var = "hurs" # "pr", "huss", "hurs (first variable is always tas)
-non_dim = false  
-use_metrics = false
+hurs_option = "log"
+
+using_two = (ARGS[1] == "true" ) #true 
+second_var = ARGS[2] #"hurs" # "pr", "huss", "hurs (first variable is always tas)
+non_dim = (ARGS[3] == "true" ) #false  
+use_metrics = (ARGS[4] == "true" )  #false
 if using_two
     parent_folder = "temp_$second_var"
 else

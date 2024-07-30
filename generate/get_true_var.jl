@@ -5,6 +5,12 @@ for variable in variables
     flush(stdout)
     for scenario in scenarios   
         println("working on $(scenario)")
+        flush(stdout)
+        if isfile("data/ground_truth/vars_$(variable)_$(scenario)_$(num_ens_members)ens.hdf5")
+            println("vars for $(variable) and $(scenario) already exist")
+            flush(stdout)
+            continue
+        end
 
         L = scenario == "historical" ? L1 : L2
 

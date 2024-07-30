@@ -59,6 +59,9 @@ end
 
 function run_ens_vars(param, d)
     if param == "d"
+        if isfile("data/$(parent_folder)/ens_vars/ens_vars_historical_$(d)d.hdf5") #generalize!
+            return nothing
+        end
         # test the differnt values of n
         for scenario in scenarios[2:end] 
             println("working on $(scenario)")
@@ -91,6 +94,9 @@ function run_ens_vars(param, d)
         end
 
     elseif param == "k"
+        if isfile("data/$(parent_folder)/ens_vars/ens_vars_historical_k.hdf5") #generalize!
+            return nothing
+        end
         # # test the differnt values of k
         for scenario in scenarios[2:end] 
             println("working on $(scenario)")

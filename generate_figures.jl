@@ -4,10 +4,12 @@ include("utils/eof_util.jl")
 include("utils/emulator_util.jl") 
 
 #specify flags to use
-using_two = true 
-second_var = "hurs" # "pr", "huss", "hurs (first variable is always tas)
-non_dim = false  
-use_metrics = false
+hurs_option = "log"
+
+using_two = (ARGS[1] == "true" ) #true 
+second_var = ARGS[2] #"hurs" # "pr", "huss", "hurs (first variable is always tas)
+non_dim = (ARGS[3] == "true" ) #false  
+use_metrics = (ARGS[4] == "true" )  #false
 if using_two
     parent_folder = "temp_$second_var"
 else
@@ -21,6 +23,7 @@ if use_metrics && using_two
 elseif use_metrics && !using_two
     parent_folder = "temp_metrics"
 end # this is not an exhaustive list of possible combinations, of course... 
+isdir(pwd() * "/figs") ? nothing : mkdir(pwd() * "/figs")
 isdir(pwd() * "/figs/$parent_folder") ? nothing : mkdir(pwd() * "/figs/$parent_folder")
 
 # get sample lat/lon vectors

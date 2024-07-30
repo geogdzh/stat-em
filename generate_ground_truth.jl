@@ -21,9 +21,11 @@ deleteat!(ensemble_members, findall(x->x==3,ensemble_members)) #issue in ssp245 
 num_ens_members = length(ensemble_members)
 
 #get baseline gmt sequences and true 
-if !isfile("data/ground_truth/historical_gmts.jld") ## generalize! to make sure they all exist
+if !isfile("data/historical_gmts_$(num_ens_members)ens.hdf5") ## generalize! to make sure they all exist
     include("generate/get_gmts.jl")
 end
 
 isdir(pwd() * "/data/ground_truth") ? nothing : mkdir(pwd() * "/data/ground_truth")
+println("getting ground truth")
+flush(stdout)
 include("generate/get_true_var.jl")
