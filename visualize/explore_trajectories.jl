@@ -14,12 +14,12 @@ close(hfile)
 
 #get gmt list
 hfile = h5open("data/ssp245_gmts_$(num_ens_members)ens.hdf5")
-ens_gmt = read(hfile, "ens_gmt")
+ens_gmt_245 = read(hfile, "ens_gmt")
 close(hfile)
 
-gmts = mean(ens_gmt, dims=1)[:]
+gmts = mean(ens_gmt_245, dims=1)[:]
 
-ensemble_size = 100
+ensemble_size = 10
 trajectories = zeros(M, N, L2, ensemble_size)
 trajectories_hurs = zeros(M, N, L2, ensemble_size)
 for n in 1:ensemble_size

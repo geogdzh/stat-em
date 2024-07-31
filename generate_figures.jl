@@ -63,9 +63,12 @@ include("visualize/select_sample_locations.jl")
 
 ##
 include("visualize/figs_samples.jl")
+include("visualize/figs_trajectories.jl")
 for variable in ["tas", second_var]
     visualize_samples(variable)
+    visualize_trajectories(variable)
 end
+
 
 ##
 include("visualize/figs_rmse.jl")

@@ -2,11 +2,11 @@ function get_emulator(d::Int)
     scenario = "ssp585"
     offload = false
 
-    if isfile("data/$(parent_folder)/gaussian_emulator_$(scenario)_$(d)d.hdf5")
-        println("emulator already exists!")
-        flush(stdout)
-        return nothing
-    end
+    # if isfile("data/$(parent_folder)/gaussian_emulator_$(scenario)_$(d)d.hdf5")
+    #     println("emulator already exists!")
+    #     flush(stdout)
+    #     return nothing
+    # end
 
     ######### load in basis
     hfile = h5open("data/$(parent_folder)/basis_2000d.hdf5", "r") #this basis is calculated from just one ens member
@@ -40,8 +40,14 @@ function get_emulator(d::Int)
     gmt_cov(ens_projts, ens_gmt, "$(scenario)_$(d)d") #saves out covs
     println("getting the cholesky decomposition and fitting")
     flush(stdout)
-    chol_coefs = get_chol_coefs(ens_gmt, "$(scenario)_$(d)d"; offload=offload) # this is NOT IMPLEMENTED YET (offload=true impossible)
+    chol_coefs, chols = get_chol_coefs(ens_gmt, "$(scenario)_$(d)d"; offload=offload, return_chols=true) # this is NOT IMPLEMENTED YET (offload=true impossible)
     # idea of offload is to enable higher numbers of modes without using insane amounts of RAM
+    #tmp!!!
+    hfile = h5open("data/process/chols_$(scenario)_$(d)d.hdf5", "w")
+    write(hfile, "chols", chols)
+    write(hfile, "chol_coefs", chol_coefs)
+    write(hfile, "ens_gmt", ens_gmt)
+    close(hfile)
 
     hfile = h5open("data/$(parent_folder)/gaussian_emulator_$(scenario)_$(d)d.hdf5", "w")
     write(hfile, "mean_coefs_1", mean_coefs_1)

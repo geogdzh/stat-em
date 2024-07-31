@@ -62,7 +62,7 @@ function gmt_cov(ens_projts, ens_gmt, offloading_tag; corrs=false, parent_folder
     close(wfile)
 end
 
-# the ORIGINAL METHOD that does both (??)
+# the ORIGINAL METHOD that does both -- ans is the one currently being used
 function get_chol_coefs(ens_gmt, offloading_tag; return_chols=false, offload=false, parent_folder=nothing)
     hfile = isnothing(parent_folder) ? h5open("data/process/covs_$(offloading_tag).hdf5", "r") : h5open("data/process/$(parent_folder)/covs_$(offloading_tag).hdf5", "r")
     D = read(hfile, "D")
@@ -72,7 +72,7 @@ function get_chol_coefs(ens_gmt, offloading_tag; return_chols=false, offload=fal
         chols = zeros((D, D, 12, num_years)) #raising errors for array size
         for i in 1:12
             for j in 1:num_years
-                covs = read(hfile, "covs_$j")
+                covs = read(hfile, "covs_$j") #this gets confusing, need to check that it's for the corresponding emulator version
                 sc = covs[:,:,i]
                 ll, vv = eigen(sc)
                 sc = sc + sqrt(eps(ll[end])) .* I
@@ -194,10 +194,15 @@ function get_cov(gmt, chol_coefs)
     return covs
 end
 
-function get_means(gmt, mean_coefs) #this doesn't account for the quadratic terms?? should it??
+function get_means(gmt, mean_coefs) 
     out = zeros((size(mean_coefs)[2],12))
+    k = size(mean_coefs)[3] -1
     for i in 1:12
-        out[:,i] = mean_coefs[i,:,2].*gmt .+ mean_coefs[i, :, 1]
+        if k == 1
+            out[:,i] = mean_coefs[i,:,2].*gmt .+ mean_coefs[i, :, 1]
+        elseif k == 2
+            out[:,i] = mean_coefs[i,:,3].*gmt.^2 .+ mean_coefs[i,:,2].*gmt .+ mean_coefs[i, :, 1]
+        end
     end
     return out
 end
@@ -252,7 +257,7 @@ end
 function emulate_step(prev_val, prev_month, covs, means; new_means=nothing, no_cov=false)
     # prev_val - value of preceding month
     # prev_month - integer of preceding month
-    # covs - matrix of covariances for the GMT of the preceding month; size = (10, 10, 12) where 10=2d
+    # covs - matrix of covariances for the GMT of the preceding month; size = (2d, 2d, 12) 
     # means - vector of means for the GMT of the preceding month
     # new_means - vector of means for the GMT of the new month, if different
     μ_1 = means[:,prev_month]
@@ -261,6 +266,7 @@ function emulate_step(prev_val, prev_month, covs, means; new_means=nothing, no_c
     Σ += I .* sqrt(eps(maximum(Σ))) #+ sqrt(eps(maximum(covs[:,:,prev_month]))) .* I 
     d = Int(size(covs)[1]/2)
     Σ_11, Σ_12, Σ_21, Σ_22 = Σ[1:d,1:d], Σ[1:d,d+1:end], Σ[d+1:end,1:d], Σ[d+1:end,d+1:end] 
+    # Σ_22 = prev_month == 12 ? covs[:,:,1][1:d,1:d] : covs[:,:,prev_month+1][1:d,1:d]
     μ_out = μ_2 .+ Σ_21 * inv(Σ_11) * (prev_val .- μ_1)
     if no_cov
         Σ_out = Σ_22

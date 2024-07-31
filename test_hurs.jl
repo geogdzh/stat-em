@@ -94,3 +94,78 @@ end
 # write(wfile, "sample_vars", sample_vars)
 # close(wfile)
 
+########################
+
+# hfile = h5open("data/ssp585_gmts_28ens.hdf5", "r")
+# ens_gmt = read(hfile, "ens_gmt")
+# close(hfile)
+# ens_gmt = mean(ens_gmt, dims=1)[:]
+
+parent_folder = "temp_hurs"
+d = 100
+scenario = "ssp585"
+num_ens_members = 28
+
+hfile = h5open("data/$(parent_folder)/training_data_ssp585_$(d)d_$(num_ens_members)ens.hdf5", "r")
+ens_gmt = read(hfile, "ens_gmt")
+close(hfile)
+ens_gmt = mean(ens_gmt, dims=1)[:]
+
+chol_coefs, chols = get_chol_coefs(ens_gmt, "$("ssp585")_$("100")d"; return_chols=true, offload=false, parent_folder=nothing)
+
+###
+
+hfile = h5open("data/process/chols_$(scenario)_$(d)d.hdf5", "r")
+chols = read(hfile, "chols")
+chol_coefs = read(hfile, "chol_coefs")
+ens_gmt = read(hfile, "ens_gmt")
+close(hfile)
+ens_gmt = ens_gmt[:]
+
+begin
+    shift  = 90
+    fig = Figure(resolution=(1000, 1000))
+    for i in 1:5
+        for j in 1:5
+            ax = Axis(fig[i, j])
+            scatter!(ax, ens_gmt, chols[i+shift, j+shift, 1, :], color=:orange, alpha=0.5)
+            fit = [chol_coefs[1, i+shift, j+shift, 2].*x .+ chol_coefs[1, i+shift, j+shift, 1] for x in ens_gmt]
+            lines!(ax, ens_gmt, fit, color=:blue)
+        end
+    end
+    display(fig)
+end
+
+
+
+hfile = h5open("data/process/covs_ssp585_100d.hdf5")
+covs = zeros(200, 200, 12, 251)
+for i in 1:251
+    covs[:,:,:,i] = read(hfile, "covs_$i")
+end
+
+covhats = zeros(200, 200,12, 251)
+for j in 1:12
+    for (i,x) in enumerate(ens_gmt)
+        U = chol_coefs[j, :, :, 2].*x .+ chol_coefs[j, :, :, 1]
+        covhats[:,:,j,i] = U' * U
+    end
+end
+
+
+
+begin
+    shift = 190
+    fig = Figure(resolution=(1000, 1000))
+    for i in 1:5
+        for j in 1:5
+            ax = Axis(fig[i, j])
+            scatter!(ax, ens_gmt, covs[i+shift, j, 8, :], color=:orange, alpha=0.5)
+
+            lines!(ax, ens_gmt, covhats[i+shift, j, 8, :], color=:blue)
+
+            # lines!(ax, ens_gmt, fit, color=:blue)
+        end
+    end
+    display(fig)
+end
