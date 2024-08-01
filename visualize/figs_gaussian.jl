@@ -82,10 +82,12 @@ begin
             samples = rand(dist, 100)
             scatter!(ax, samples[1,:], samples[2,:], color=:black)
 
+            
+
             hidedecorations!(ax, label=false)
         end
     end
-    save("figs/$parent_folder/eof_gaussianity.png", fig)
+    # save("figs/$parent_folder/eof_gaussianity.png", fig)
     display(fig)
 end
 

@@ -1,6 +1,6 @@
 
 
-function plot_rmse(ax, variable, measure, numbers; testing_k=false, rel_error=false)
+function plot_rmse(ax, variable, measure, numbers; testing_k=false, show_pattern_scaling=false)
     label = variable == "tas" ? variable : "two"
 
     linestyles = testing_k ? [  :dash, :solid] : [ :dot, :solid]
@@ -10,14 +10,20 @@ function plot_rmse(ax, variable, measure, numbers; testing_k=false, rel_error=fa
             
             if testing_k
                 ser = read(hfile, "rmse_$(measure)s_time_$(label)_k$(number)")
-            elseif rel_error
-                ser = read(hfile, "rmse_$(measure)s_time_$(label)_$(number)_rel")
             else    
                 ser = read(hfile, "rmse_$(measure)s_time_$(label)_$(number)")
             end
 
             lines!(ax, time_future, month_to_year_avg(ser), color=scenario_colors[scenario], alpha=0.6, linestyle=linestyles[i])
             close(hfile)
+
+            if show_pattern_scaling && !testing_k && (measure != "std")
+                hfile = h5open("data/pattern_scaling/rmse_$(scenario)_$(variable)_$(num_ens_members)ens.hdf5", "r")
+                ser = read(hfile, "rmse_time_$(measure)")
+                close(hfile)
+
+                lines!(ax, time_future, month_to_year_avg(ser), color=scenario_colors[scenario], alpha=0.6, linestyle=:dash)
+            end
         end
     end
 
@@ -25,7 +31,11 @@ function plot_rmse(ax, variable, measure, numbers; testing_k=false, rel_error=fa
     elems_2 = [ LineElement(color=scenario_colors["ssp119"]), LineElement(color=scenario_colors["ssp245"]), LineElement(color=scenario_colors["ssp585"])]
     labels = testing_k ? ["k=1",  "k=2"] : [ "100 modes",  "10 modes"]
     labels_2 = [ "SSP119", "SSP245", "SSP585"]
-    axislegend(ax, [elems..., elems_2...], [labels..., labels_2...], position=(measure=="var" && variable=="temp" ? :lb : :lt))
+    if show_pattern_scaling && !testing_k && (measure != "std")
+        push!(elems, LineElement(color=:black, linestyle=:dash))
+        push!(labels, "pattern scaling")
+    end
+    axislegend(ax, [elems..., elems_2...], [labels..., labels_2...], position=(measure=="std" && variable=="tas" ? :rc : :lt))
 end
 
 
@@ -34,19 +44,19 @@ function generate_rmse_fig(variable)
     ks = [x for x in 1:2]
     label = variable == "tas" ? variable : "two"
     long_label = var_labels[variable]    
+    show_pattern_scaling = true
 
     begin 
         fig = Figure(resolution=(1500,1000)) #
-        # lims = Dict("temp" => (0.15, 0.6), "pr" => (3e-6, 9e-6))
+        lims = Dict("tas" => (0.2, 0.7), "hurs" => (0.015, 0.05))
 
-        rel_error = false # if true, remove ylims settings
         measure = "mean"
         ax = Axis(fig[1,1:4], title="a) Average RMSE of the ensemble $(measure) \n for $(long_label) for varied # of modes", xlabel="Year", ylabel="RMSE")
-        # ylims!(ax, lims[variable])
-        plot_rmse(ax, variable, measure, numbers; rel_error=rel_error)
+        ylims!(ax, lims[variable])
+        plot_rmse(ax, variable, measure, numbers; show_pattern_scaling=show_pattern_scaling)
         ax = Axis(fig[1,5:8], title="b) Average RMSE of the ensemble $(measure) \n for $(long_label) for varied degree of fit", xlabel="Year")
-        # ylims!(ax, lims[variable])
-        plot_rmse(ax, variable, measure, ks; rel_error=rel_error, testing_k=true)
+        ylims!(ax, lims[variable])
+        plot_rmse(ax, variable, measure, ks; testing_k=true)
         
 
         ax = GeoAxis(fig[2,1:5], title="d) RMSE of the ensemble $(measure) \n for $(long_label) on SSP119", xticklabelrotation=45.0)
@@ -61,7 +71,7 @@ function generate_rmse_fig(variable)
 
         measure = "std"
         ax = Axis(fig[1,9:12], title="c) Average RMSE of the ensemble $(measure) \n for $(long_label) for varied # of modes", xlabel="Year")
-        plot_rmse(ax, variable, measure, numbers; rel_error=rel_error)
+        plot_rmse(ax, variable, measure, numbers; show_pattern_scaling=show_pattern_scaling)
         
         ax = GeoAxis(fig[2,7:11], title="e) RMSE of the ensemble $(measure) \n for $(long_label) on SSP119", xticklabelrotation=45.0)
         hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_rmse_$("ssp119").hdf5", "r")

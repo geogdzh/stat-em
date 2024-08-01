@@ -90,10 +90,19 @@ end
 println("calculating RMSE")
 flush(stdout)
 include("generate/get_rmse.jl")
-for variable in ["tas"] #CHANGE BACK
+for variable in ["tas", second_var]
     numbers = [10, 100]
     calculate_rmse(numbers, variable, scenarios; for_k=false)
     
     ks = [x for x in 1:2]
     calculate_rmse(ks, variable, scenarios; for_k=true)
+end
+
+## generate pattern scaling comparsion
+isdir(pwd() * "/data/pattern_scaling") ? nothing : mkdir(pwd() * "/data/pattern_scaling")
+include("generate/pattern_scaling.jl")
+for variable in ["tas", second_var]
+    for measure in ["mean", "std"]
+        generate_pattern_scaling(variable, measure)
+    end
 end

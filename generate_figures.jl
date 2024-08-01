@@ -47,7 +47,7 @@ deleteat!(ensemble_members, findall(x->x==8,ensemble_members)) #issue in histori
 deleteat!(ensemble_members, findall(x->x==3,ensemble_members)) #issue in ssp245 hurs data
 num_ens_members = length(ensemble_members)
 
-##
+#
 var_labels = Dict("tas" => "temperature", "huss" => "specific humidity", "hurs" => "relative humidity", "pr" => "precipitation")
 scenario_colors = Dict("historical" => :red4, "ssp585" => :red, "ssp245" => :magenta3, "ssp119" => :indigo)
 unit_labels = Dict("tas" => "K", "huss" => "kg/kg", "hurs" => "%", "pr" => "mm/day")
