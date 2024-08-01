@@ -127,34 +127,3 @@ begin
     display(fig)
 end 
 
-
-#### covariance fits
-d = 100
-scenario = "ssp585"
-
-hfile = h5open("data/process/chols_$(scenario)_$(d)d.hdf5", "r")
-chols = read(hfile, "chols")
-chol_coefs = read(hfile, "chol_coefs")
-ens_gmt = read(hfile, "ens_gmt")[:]
-close(hfile)
-
-hfile = h5open("data/process/covs_$(scenario)_$(d)d.hdf5")
-covs = zeros(200, 200, 12, length(ens_gmt)) 
-for i in 1:length(ens_gmt)
-    covs[:,:,:,i] = read(hfile, "covs_$i")
-end
-
-begin
-    for shift in [0, 95]
-        fig = Figure(resolution=(1000, 1000))
-        for i in 1:5
-            for j in 1:5
-                ax = Axis(fig[i, j], xticklabelrotation=45, title=(i==1 ? "Mode $(j+shift)" : ""), xlabel = (i==5 ? "GMT" : ""), ylabel = (j==1 ? "Mode $(i+shift)" : ""), ylabelfont=:bold)
-                scatter!(ax, ens_gmt, covs[i+shift, j+shift, 1, :], color=:orange, alpha=0.5)
-                lines!(ax, ens_gmt, covhats[i+shift, j+shift, 1, :], color=:blue)
-            end
-        end
-        save("figs/$parent_folder/covariance_fits_$(shift==0 ? "top" : "bottom").png", fig)
-        display(fig)
-    end
-end

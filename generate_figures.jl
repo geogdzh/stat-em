@@ -58,6 +58,8 @@ include("visualize/figs_data.jl")
 
 include("visualize/figs_fits.jl")
 
+include("visualize/figs_gaussian.jl")
+
 ##
 include("visualize/select_sample_locations.jl")
 

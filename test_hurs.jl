@@ -169,3 +169,8 @@ begin
     end
     display(fig)
 end
+
+using_two = true 
+second_var ="hurs" # "pr", "huss", "hurs (first variable is always tas)
+non_dim = false  
+use_metrics = false
