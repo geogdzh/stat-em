@@ -77,8 +77,3 @@ include("visualize/figs_rmse.jl")
 for variable in ["tas", second_var]
     generate_rmse_fig(variable)
 end
-
-#= implement two potential other plots
-adapting from sample locations ==> parallel plots but for a different scenario (validate power of PDFs more) ## and this also feels natural
-+ explore_seasonality ==> sample changes in max difference (show advantage of looking at months) ## maybe not this, maybe in an appendix
-+ explore_trajectories ==> sample trajectory variablity (show for transition section)=# ## I mean this is definitely necessry

@@ -1,4 +1,4 @@
-function calculate_rmse(numbers, variable, scenarios; for_k=false)
+function calculate_rmse(numbers, variable, scenarios; for_k=false, which_k=1)
  
     label = variable == "tas" ? variable : "two"
 
@@ -30,7 +30,7 @@ function calculate_rmse(numbers, variable, scenarios; for_k=false)
             for number in numbers
                 hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(number)d.hdf5", "r") #emulator vars - this includes means
 
-                ens_means =  read(hfile, "ens_means_$(label)_$(number)")
+                ens_means =  read(hfile, "ens_means_$(label)_$(number)_k$(which_k)")
                 ens_vars = read(hfile, "ens_vars_$(label)_$(number)")
 
                 rmse_stds = sqrt.(sum((sqrt.(true_var) .- sqrt.(ens_vars)).^2, dims=3)[:,:,1]./size(true_var)[3]) #time average rmse (shaped as a map)

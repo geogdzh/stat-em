@@ -1,4 +1,4 @@
-function get_ens_vars(d, true_ens_gmt; get_means=false, k=2) # OR the means lol
+function get_ens_vars(d, true_ens_gmt; get_means=false, k=1) # OR the means lol
     M = 192
     N = 96
     L = 1032
@@ -79,19 +79,24 @@ function run_ens_vars(param, d)
             flush(stdout)
             if using_two
                 ens_vars_tas, ens_vars_two = get_ens_vars(d, true_ens_gmt)
-                ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true)
+                ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true, k=1)
                 hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
                 write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
                 write(hfile, "ens_vars_two_$(d)", ens_vars_two)
-                write(hfile, "ens_means_tas_$(d)", ens_means_tas)
-                write(hfile, "ens_means_two_$(d)", ens_means_two)
+                write(hfile, "ens_means_tas_$(d)_k1", ens_means_tas)
+                write(hfile, "ens_means_two_$(d)_k1", ens_means_two)
+                ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true, k=2)
+                write(hfile, "ens_means_tas_$(d)_k2", ens_means_tas)
+                write(hfile, "ens_means_two_$(d)_k2", ens_means_two)
                 close(hfile)
             else
                 ens_vars_tas = get_ens_vars(d, true_ens_gmt)
-                ens_means_tas = get_ens_vars(d, true_ens_gmt; get_means=true)
+                ens_means_tas = get_ens_vars(d, true_ens_gmt; get_means=true, k=1)
                 hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w")
                 write(hfile, "ens_vars_tas_$(d)", ens_vars_tas)
-                write(hfile, "ens_means_tas_$(d)", ens_means_tas)
+                write(hfile, "ens_means_tas_$(d)_k1", ens_means_tas)
+                ens_means_tas = get_ens_vars(d, true_ens_gmt; get_means=true, k=2)
+                write(hfile, "ens_means_tas_$(d)_k2", ens_means_tas)
                 close(hfile)
             end
         end

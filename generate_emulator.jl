@@ -92,7 +92,7 @@ flush(stdout)
 include("generate/get_rmse.jl")
 for variable in ["tas", second_var]
     numbers = [10, 100]
-    calculate_rmse(numbers, variable, scenarios; for_k=false)
+    calculate_rmse(numbers, variable, scenarios; for_k=false, which_k=1) #toggle here for which k is used in panel (a) of RMSE plots
     
     ks = [x for x in 1:2]
     calculate_rmse(ks, variable, scenarios; for_k=true)

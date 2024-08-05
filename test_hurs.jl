@@ -174,3 +174,34 @@ using_two = true
 second_var ="hurs" # "pr", "huss", "hurs (first variable is always tas)
 non_dim = false  
 use_metrics = false
+
+#####
+include("generate/get_ens_var.jl")
+for scenario in scenarios[2:end]
+    hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r") 
+    ens_gmt = read(hfile, "ens_gmt")
+    true_ens_gmt = mean(ens_gmt, dims=1)[:]
+    close(hfile)
+    for d in [10,100]
+        # mv("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d_old.hdf5")
+        hfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d_old.hdf5", "r")
+        ens_vars_tas = read(hfile, "ens_vars_tas_$(d)")
+        ens_vars_two = read(hfile, "ens_vars_two_$(d)")
+        close(hfile)
+
+        wfile = h5open("data/$(parent_folder)/ens_vars/ens_vars_$(scenario)_$(d)d.hdf5", "w") 
+
+        write(wfile, "ens_vars_tas_$(d)", ens_vars_tas)
+        write(wfile, "ens_vars_two_$(d)", ens_vars_two)
+
+        ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true, k=1)
+        write(wfile, "ens_means_tas_$(d)_k1", ens_means_tas)
+        write(wfile, "ens_means_two_$(d)_k1", ens_means_two)
+
+        ens_means_tas, ens_means_two = get_ens_vars(d, true_ens_gmt; get_means=true, k=2)
+        write(wfile, "ens_means_tas_$(d)_k2", ens_means_tas)
+        write(wfile, "ens_means_two_$(d)_k2", ens_means_two)
+        close(wfile)
+    end
+end
+
