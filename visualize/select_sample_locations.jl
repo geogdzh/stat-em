@@ -19,29 +19,29 @@ sampling_indices[6,:] = get_indices(174, 176, -38, -36, ts3) #auckland, nz
 sampling_labels = ["Chicago, USA", "Manaus, Brazil", "Kano, Nigeria", "Inari, Finland", "Dhaka, Bhangladesh", "Auckland, NZ"]
 
 #### start with: real data PDFs for last ten years of SSP585
-for variable in ["tas", second_var]
-    if isfile("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5")
-        continue
+function get_samples(variable, scenario)
+    if isfile("data/ground_truth/location_samples_$(variable)_$(scenario)_$(num_ens_members)ens.hdf5")
+        return
     end
 
     end_points = zeros(6, num_ens_members, 120)
-    for n in 1:num_ens_members
-        file = file_head*"ssp585/$(variable)/r$(n)i1p1f1_ssp585_$(variable).nc"
+    for (i,n) in enumerate(ensemble_members)
+        file = file_head*"$(scenario)/$(variable)/r$(n)i1p1f1_$(scenario)_$(variable).nc"
         ts = ncData(file, variable)
         data = apply_transform(ts.data, variable; hurs_option=hurs_option)
         for ind in 1:6
             subset = data[sampling_indices[ind,1]:sampling_indices[ind,2], sampling_indices[ind,3]:sampling_indices[ind,4], end-119:end]
             avg = mean(subset, dims=(1,2))[:]
-            end_points[ind, n, :] = avg
+            end_points[ind, i, :] = avg
         end
     end
-    wfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "w")
+    wfile = h5open("data/ground_truth/location_samples_$(variable)_$(scenario)_$(num_ens_members)ens.hdf5", "w")
     write(wfile, "end_points", end_points)
     write(wfile, "sampling_indices", sampling_indices)
     write(wfile, "sampling_labels", sampling_labels)
 
     # normal approximation to ground truth
-    hfile = h5open("data/ground_truth/vars_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "r") # true CMIP vars incl means
+    hfile = h5open("data/ground_truth/vars_$(variable)_$(scenario)_$(num_ens_members)ens.hdf5", "r") # true CMIP vars incl means
     true_var = read(hfile, "true_var")
     true_ens_mean = read(hfile, "true_ens_mean")
     close(hfile)

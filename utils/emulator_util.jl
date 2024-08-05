@@ -209,6 +209,7 @@ end
 
 function emulate_no_cov(gmt_list, mean_coefs, chol_coefs)
     num_years = length(gmt_list)
+    d = size(mean_coefs)[2]
     # gmt assumed constant for each year
     trajectory = zeros(size(mean_coefs)[2], 12*num_years) 
     for yr in 1:num_years

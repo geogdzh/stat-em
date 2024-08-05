@@ -1,10 +1,10 @@
-function visualize_samples(variable)
+function visualize_samples(variable, scenario)
 
     #####
     label = variable == "tas" ? variable : "two"
 
     # get the ground truth
-    hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "r")
+    hfile = h5open("data/ground_truth/location_samples_$(variable)_$(scenario)_$(num_ens_members)ens.hdf5", "r")
     sampling_indices = read(hfile, "sampling_indices")
     sampling_labels = read(hfile, "sampling_labels")
     end_points = read(hfile, "end_points")
@@ -13,8 +13,8 @@ function visualize_samples(variable)
     close(hfile)
 
     ## get emulator approximation
-    hfile = h5open("data/$parent_folder/ens_vars/ens_vars_ssp585_100d.hdf5", "r")
-    ens_means = read(hfile, "ens_means_$(label)_100")
+    hfile = h5open("data/$parent_folder/ens_vars/ens_vars_$(scenario)_100d.hdf5", "r")
+    ens_means = read(hfile, "ens_means_$(label)_100_k2")
     ens_vars = read(hfile, "ens_vars_$(label)_100")
     close(hfile)
 
@@ -52,7 +52,7 @@ function visualize_samples(variable)
                 end
             end
         end
-        save("figs/$parent_folder/$(variable)_samples.png", fig)
+        save("figs/$parent_folder/$(variable)_$(scenario)_samples.png", fig)
         display(fig)
     end
 

@@ -1,14 +1,14 @@
-function visualize_trajectories(variable)
+function visualize_trajectories(variable, scenario)
     label = variable == "tas" ? variable : "two"
     d = 100
 
-    hfile = h5open("data/ground_truth/location_samples_$(variable)_ssp585_$(num_ens_members)ens.hdf5", "r")
+    hfile = h5open("data/ground_truth/location_samples_$(variable)_$(scenario)_$(num_ens_members)ens.hdf5", "r")
     sampling_indices = read(hfile, "sampling_indices")
     sampling_labels = read(hfile, "sampling_labels")
     end_points = read(hfile, "end_points")
     close(hfile)
 
-    hfile = h5open("data/ssp585_gmts_$(num_ens_members)ens.hdf5", "r")
+    hfile = h5open("data/$(scenario)_gmts_$(num_ens_members)ens.hdf5", "r")
     ens_gmt = read(hfile, "ens_gmt")
     close(hfile)
     ens_gmt = mean(ens_gmt, dims=1)[:]
@@ -49,7 +49,7 @@ function visualize_trajectories(variable)
                 end
             end
         end
-        save("figs/$parent_folder/$(variable)_sample_trajectories.png", fig)
+        save("figs/$parent_folder/$(variable)_$(scenario)_sample_trajectories.png", fig)
         display(fig)
     end
 end

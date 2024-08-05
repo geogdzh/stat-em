@@ -62,15 +62,21 @@ include("visualize/figs_gaussian.jl")
 
 ##
 include("visualize/select_sample_locations.jl")
+for scenario in scenarios[2:end] 
+    for variable in ["tas", second_var]
+        get_samples(variable, scenario)
+    end
+end
 
 ##
 include("visualize/figs_samples.jl")
 include("visualize/figs_trajectories.jl")
-for variable in ["tas", second_var]
-    visualize_samples(variable)
-    visualize_trajectories(variable)
+for scenario in scenarios[2:end]
+    for variable in ["tas", second_var]
+        visualize_samples(variable, scenario)
+        visualize_trajectories(variable, scenario)
+    end
 end
-
 
 ##
 include("visualize/figs_rmse.jl")
